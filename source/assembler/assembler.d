@@ -408,8 +408,14 @@ class Assembler {
 	}
 
 	void Assemble() {
+		uint programSize;
 		foreach (ref inode ; nodes) {
 			switch (inode.type) {
+				case NodeType.Label: {
+					auto node         = cast(LabelNode) inode;
+					labels[node.name] = programSize;
+					break;
+				}
 				case NodeType.Instruction: {
 					auto node = cast(InstructionNode) inode;
 
@@ -417,8 +423,40 @@ class Assembler {
 						Error(node.error, "No such instruction '%s'", node.name);
 					}
 
+					programSize += insts[node.name].Size();
+					break;
+				}
+				default: break;
+			}
+		}
+
+		foreach (ref inode ; nodes) {
+			switch (inode.type) {
+				case NodeType.Label: break;
+				case NodeType.Instruction: {
+					auto   node = cast(InstructionNode) inode;
+					Node[] params;
+
+					foreach (ref param ; node.params) {
+						switch (param.type) {
+							case NodeType.Identifier: {
+								auto node2 = cast(IdentifierNode) param;
+
+								if (node2.name !in labels) {
+									Error(node.error, "Unknown label '%s'", node2.name);
+								}
+
+								params ~= new IntegerNode(labels[node2.name]);
+								break;
+							}
+							default: {
+								params ~= param;
+							}
+						}
+					}
+
 					try {
-						bin ~= insts[node.name].Assemble(node.error, node.params);
+						bin ~= insts[node.name].Assemble(node.error, params);
 					}
 					catch (AssemblerException e) {
 						Error(node.error, e.msg);

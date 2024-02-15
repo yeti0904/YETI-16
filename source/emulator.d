@@ -311,14 +311,14 @@ class Emulator {
 	void DumpState() {
 		writeln("YETI-16 State");
 		writeln("=============");
-		writefln("A = %.4X", a);
-		writefln("B = %.4X", b);
-		writefln("C = %.4X", c);
-		writefln("D = %.4X", d);
-		writefln("E = %.4X", e);
-		writefln("F = %.4X", f);
-		writefln("G = %.4X", g);
-		writefln("H = %.4X", h);
+		writefln("A  = %.4X", a);
+		writefln("B  = %.4X", b);
+		writefln("C  = %.4X", c);
+		writefln("D  = %.4X", d);
+		writefln("E  = %.4X", e);
+		writefln("F  = %.4X", f);
+		writefln("G  = %.4X", g);
+		writefln("H  = %.4X", h);
 		writefln("IP = %.6X", ip);
 		writefln("SP = %.6X", sp);
 		writefln("BS = %.6X", bs);

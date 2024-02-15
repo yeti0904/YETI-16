@@ -1,2 +1,3 @@
-ldsi a 59
-hlt
+test:
+	jmpb test
+test2:
