@@ -47,18 +47,14 @@ void main(string[] args) {
 				exit(1);
 			}
 
-			emulator.LoadProgram(0x050000, program);
-
-			while (!emulator.halted) {
-				emulator.RunInstruction();
-			}
-
+			emulator.LoadData(0x050000, program);
+			emulator.Run();
 			emulator.DumpState();
 			break;
 		}
 		case "asm": {
 			string file;
-			string outFile;
+			string outFile = "out.bin";
 
 			for (size_t i = 2; i < args.length; ++ i) {
 				if (args[i][0] == '-') {

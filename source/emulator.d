@@ -1,7 +1,13 @@
 module yeti16.emulator;
 
+import std.array;
 import std.stdio;
+import std.format;
+import std.datetime.stopwatch;
+import core.thread;
+import bindbc.sdl;
 import yeti16.signed;
+import yeti16.display;
 
 enum Register : ubyte {
 	A = 0,
@@ -90,7 +96,7 @@ enum Instruction : ubyte {
 	CHK   = 0b10100010,
 	ACTV  = 0b10100011,
 	JMP   = 0b11000000,
-	JMPB  = 0b11000000,
+	JMPB  = 0b11000001,
 	JZ    = 0b11000100,
 	JNZ   = 0b11000110,
 	JS    = 0b11001000,
@@ -132,9 +138,21 @@ class Emulator {
 	// system stuff
 	ubyte[] ram;
 	bool    halted;
+	Display display;
+
+	// config
+	static const double speed = 20; // MHz
 
 	this() {
-		ram = new ubyte[](0xFFFFFF);
+		ram = uninitializedArray!(ubyte[])(0xFFFFFF);
+		
+		display     = new Display();
+		display.emu = this;
+		display.Init();
+	}
+
+	~this() {
+		display.Free();
 	}
 
 	bool GetFlag(ubyte flag) {
@@ -304,8 +322,13 @@ class Emulator {
 		ram[addr + 2] = cast(ubyte) ((value & 0xFF0000) >> 16);
 	}
 
-	void LoadProgram(uint where, ubyte[] program) {
-		ram[where .. where + program.length] = program;
+	void LoadData(uint where, const ubyte[] data) {
+		ram[where .. where + data.length] = data;
+	}
+
+	void Error(Char, A...)(in Char[] fmt, A args) {
+		stderr.writeln(format(fmt, args));
+		halted = true;
 	}
 
 	void DumpState() {
@@ -559,7 +582,7 @@ class Emulator {
 			case Instruction.INCP: {
 				auto reg = Next1Nibble();
 
-				if (ReadRegPair(reg) == 0xFFFF) {
+				if (ReadRegPair(reg) == 0xFFFFFF) {
 					SetFlag(Flag.Carry, true);
 					SetFlag(Flag.Zero, true);
 					WriteRegPair(reg, 0);
@@ -577,7 +600,7 @@ class Emulator {
 				if (ReadRegPair(reg) == 0) {
 					SetFlag(Flag.Carry, true);
 					SetFlag(Flag.Zero, false);
-					WriteRegPair(reg, 0xFFFF);
+					WriteRegPair(reg, 0xFFFFFF);
 				}
 				else {
 					SetFlag(Flag.Carry, false);
@@ -738,7 +761,44 @@ class Emulator {
 				halted = true;
 				return;
 			}
-			default: assert(0); // TODO: error
+			default: {
+				Error("Invalid opcode %.2X", op);
+			}
+		}
+	}
+
+	void Run() {
+		double frameTimeGoal = 1000.0 / 60.0;
+		auto   instPerFrame  = cast(uint) ((Emulator.speed * 1000000) / 60);
+
+		ip = 0x050000;
+		bs = ip;
+
+		while (!halted) {
+			auto sw = StopWatch(AutoStart.yes);
+
+			SDL_Event e;
+			while (SDL_PollEvent(&e)) {
+				switch (e.type) {
+					case SDL_QUIT: return;
+					default:       break;
+				}
+			}
+
+			foreach (i ; 0 .. instPerFrame) {
+				RunInstruction();
+				if (halted) {
+					break;
+				}
+			}
+
+			display.Render();
+			sw.stop();
+
+			double frameTime = sw.peek.total!("msecs");
+			if (frameTimeGoal > frameTime) {
+				Thread.sleep(dur!("msecs")(cast(long) (frameTimeGoal - frameTime)));
+			}
 		}
 	}
 }

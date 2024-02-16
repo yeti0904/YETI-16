@@ -399,6 +399,20 @@ class Assembler {
 		insts["ret"]   = new InstNoArgs(InstBin.RET);
 		insts["int"]   = new InstDD(InstBin.INT);
 		insts["hlt"]   = new InstNoArgs(InstBin.HLT);
+
+		// aliases
+		insts["je"]   = insts["jz"];
+		insts["jne"]  = insts["jnz"];
+		insts["jg"]   = insts["js"];
+		insts["jng"]  = insts["jns"];
+		insts["jl"]   = insts["jc"];
+		insts["jnl"]  = insts["jnc"];
+		insts["jeb"]  = insts["jzb"];
+		insts["jneb"] = insts["jnzb"];
+		insts["jgb"]  = insts["jsb"];
+		insts["jngb"] = insts["jnsb"];
+		insts["jlb"]  = insts["jcb"];
+		insts["jnlb"] = insts["jncb"];
 	}
 
 	void Error(Char, A...)(ErrorInfo info, in Char[] fmt, A args) {
