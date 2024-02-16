@@ -110,7 +110,7 @@ Note: emulators don't have to implement any instructions that aren't in this tab
 | SHL      | `10000000 RRRRSSSS`                             | `R = R << S`                         | Z, C           |
 | SHR      | `10000001 RRRRSSSS`                             | `R = R >> S`                         | Z              |
 | AND      | `10000010 RRRRSSSS`                             | `R = R & S`                          | Z              |
-| OR       | `10000011 RRRRSSSS`                             | `R = R | S`                          | Z              |
+| OR       | `10000011 RRRRSSSS`                             | `R = R \| S`                         | Z              |
 | XOR      | `10000100 RRRRSSSS`                             | `R = R ^ S`                          | Z              |
 | NOT      | `10000101 0000RRRR`                             | `R = ~R`                             | Z              |
 | OUT      | `10100000 RRRRSSSS`                             | `R < S`                              |                |
