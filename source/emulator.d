@@ -6,8 +6,10 @@ import std.format;
 import std.datetime.stopwatch;
 import core.thread;
 import bindbc.sdl;
+import yeti16.device;
 import yeti16.signed;
 import yeti16.display;
+import yeti16.devices.debugging;
 
 enum Register : ubyte {
 	A = 0,
@@ -136,9 +138,10 @@ class Emulator {
 	uint sr;
 
 	// system stuff
-	ubyte[] ram;
-	bool    halted;
-	Display display;
+	ubyte[]     ram;
+	bool        halted;
+	Display     display;
+	Device[256] devices;
 
 	// config
 	static const double speed = 20; // MHz
@@ -149,6 +152,19 @@ class Emulator {
 		display     = new Display();
 		display.emu = this;
 		display.Init();
+
+		devices[0] = new DebuggingDevice();
+
+		writeln("Connected devices");
+		size_t lastDevice;
+		foreach (i, ref dev ; devices) {
+			if (dev is null) continue;
+
+			writefln(" - (%d) %s", i, dev.name);
+			lastDevice = i;
+		}
+
+		writefln(" - (%d) Nvidia RTX 4090 Ti", lastDevice + 1);
 	}
 
 	~this() {
@@ -696,10 +712,49 @@ class Emulator {
 				SetFlag(Flag.Zero, ReadRegister(val) == 0);
 				break;
 			}
-			case Instruction.OUT: assert(0); // TODO
-			case Instruction.IN: assert(0); // TODO
-			case Instruction.CHK: assert(0); // TODO
-			case Instruction.ACTV: assert(0); // TODO
+			case Instruction.OUT: {
+				ubyte devReg;
+				ubyte valueReg;
+				Next2Nibbles(&devReg, &valueReg);
+
+				auto dev   = ReadRegister(devReg) & 0xFF;
+				auto value = ReadRegister(valueReg);
+
+				if (devices[dev] is null) assert(0); // TODO: error
+
+				devices[dev].Out(value);
+				break;
+			}
+			case Instruction.IN: {
+				ubyte destReg;
+				ubyte devReg;
+				Next2Nibbles(&destReg, &devReg);
+
+				auto dev = ReadRegister(devReg) & 0xFF;
+
+				if (devices[dev] is null) assert(0); // TODO: error
+				if (devices[dev].data.empty) assert(0); // TODO: error
+
+				WriteRegister(destReg, devices[dev].data[0]);
+				devices[dev].data = devices[dev].data[1 .. $];
+				break;
+			}
+			case Instruction.CHK: {
+				auto devReg = Next1Nibble();
+				auto dev    = ReadRegister(devReg) & 0xFF;
+
+				if (devices[dev] is null) assert(0); // TODO: error
+
+				SetFlag(Flag.Zero, devices[dev].data.empty? 0 : 1);
+				break;
+			}
+			case Instruction.ACTV: {
+				auto devReg = Next1Nibble();
+				auto dev    = ReadRegister(devReg) & 0xFF;
+
+				SetFlag(Flag.Zero, devices[dev] is null? 0 : 1);
+				break;
+			}
 			case Instruction.JMP: .. case Instruction.JNCB: {
 				auto condition = (op & 0b00011100) >> 2;
 				auto not       = (op & 0b00000010) >> 1;

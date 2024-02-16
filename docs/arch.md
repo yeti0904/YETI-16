@@ -116,7 +116,7 @@ Note: emulators don't have to implement any instructions that aren't in this tab
 | OUT      | `10100000 RRRRSSSS`                             | `R < S`                              |                |
 | IN       | `10100001 RRRRSSSS`                             | `S > R`                              |                |
 | CHK      | `10100010 0000SSSS`                             | `Z = data_available(S)`              | Z              |
-| ACTV     | `10100011 0000SSSS`                             | `Z = data_available(S)`              | Z              |
+| ACTV     | `10100011 0000SSSS`                             | `Z = device_active(S)`               | Z              |
 | JMP      | `11000000 DDDDDDDD DDDDDDDD DDDDDDDD`           | `IP = D`                             |                |
 | JMPB     | `11000001 DDDDDDDD DDDDDDDD DDDDDDDD`           | `IP = BS + D`                        |                |
 | JZ       | `11000100 DDDDDDDD DDDDDDDD DDDDDDDD`           | `if (zero) IP = D`                   |                |
