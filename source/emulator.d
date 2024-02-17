@@ -9,6 +9,7 @@ import bindbc.sdl;
 import yeti16.device;
 import yeti16.signed;
 import yeti16.display;
+import yeti16.devices.serial;
 import yeti16.devices.debugging;
 
 enum Register : ubyte {
@@ -146,7 +147,7 @@ class Emulator {
 	// config
 	static const double speed = 20; // MHz
 
-	this() {
+	this(bool enableSerial, string[] allowedIPs) {
 		ram = uninitializedArray!(ubyte[])(0xFFFFFF);
 		
 		display     = new Display();
@@ -154,6 +155,10 @@ class Emulator {
 		display.Init();
 
 		devices[0] = new DebuggingDevice();
+
+		if (enableSerial) {
+			devices[0x20] = new SerialDevice(4040, allowedIPs);
+		}
 
 		writeln("Connected devices");
 		size_t lastDevice;
@@ -845,6 +850,12 @@ class Emulator {
 				if (halted) {
 					break;
 				}
+			}
+
+			foreach (ref dev ; devices) {
+				if (dev is null) continue;
+
+				dev.Update();
 			}
 
 			display.Render();

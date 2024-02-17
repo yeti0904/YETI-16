@@ -10,13 +10,8 @@ class DebuggingDevice : Device {
 	}
 
 	override void Out(ushort dataIn) {
-		if (dataIn == 0) {
-			name.each!(c => data ~= c);
-		}
-		else {
-			writef("%c", cast(char) dataIn);
-			stdout.flush();
-		}
+		writef("%c", cast(char) dataIn);
+		stdout.flush();
 	}
 
 	override void Update() {

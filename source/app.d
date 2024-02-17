@@ -14,8 +14,12 @@ const string appUsage = "
 Usage: %s OPERATION [flags]
 
 Operations:
-	run FILE                   - runs the given binary file in the emulator
+	run FILE [read flags]      - runs the given binary file in the emulator
 	asm FILE [-o out_file.bin] - assembles the given file (to \"out.bin\" by default)
+
+Run flags:
+	--serial        : Enables the serial port (port 4040)
+	--allow-ip <IP> : Adds an IP to the serial port whitelist
 ";
 
 void main(string[] args) {
@@ -31,12 +35,33 @@ void main(string[] args) {
 
 	switch (args[1]) {
 		case "run": {
-			if (args.length != 3) {
+			if (args.length < 3) {
 				stderr.writeln("Emulator needs FILE parameter");
 				exit(1);
 			}
+
+			bool     enableSerial;
+			string[] allowedIPs = ["127.0.0.1", "0.0.0.0"];
+
+			for (size_t i = 3; i < args.length; ++ i) {
+				switch (args[i]) {
+					case "--serial": {
+						enableSerial = true;
+						break;
+					}
+					case "--allow-ip": {
+						++ i;
+						allowedIPs ~= args[i];
+						break;
+					}
+					default: {
+						stderr.writefln("Unknown flag %s", args[i]);
+						exit(1);
+					}
+				}
+			}
 			
-			auto    emulator = new Emulator();
+			auto    emulator = new Emulator(enableSerial, allowedIPs);
 			ubyte[] program;
 
 			try {
@@ -48,6 +73,7 @@ void main(string[] args) {
 			}
 
 			emulator.LoadData(0x050000, program);
+
 			emulator.Run();
 			emulator.DumpState();
 			break;

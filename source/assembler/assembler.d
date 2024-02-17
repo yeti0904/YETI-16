@@ -322,6 +322,7 @@ class Assembler {
 	ubyte[]             bin;
 	Instruction[string] insts;
 	uint[string]        labels;
+	long[string]        consts;
 
 	this() {
 		insts["nop"]   = new InstNoArgs(InstBin.NOP);
@@ -456,11 +457,18 @@ class Assembler {
 							case NodeType.Identifier: {
 								auto node2 = cast(IdentifierNode) param;
 
-								if (node2.name !in labels) {
-									Error(node.error, "Unknown label '%s'", node2.name);
+								if (node2.name in labels) {
+									params ~= new IntegerNode(labels[node2.name]);
 								}
-
-								params ~= new IntegerNode(labels[node2.name]);
+								else if (node2.name in consts) {
+									params ~= new IntegerNode(consts[node2.name]);
+								}
+								else {
+									Error(
+										node.error, "Unknown identifier '%s'",
+										node2.name
+									);
+								}
 								break;
 							}
 							default: {
@@ -475,6 +483,16 @@ class Assembler {
 					catch (AssemblerException e) {
 						Error(node.error, e.msg);
 					}
+					break;
+				}
+				case NodeType.Define: {
+					auto node = cast(DefineNode) inode;
+
+					if (node.name in consts) {
+						Error(node.error, "Constant '%s' already defined", node.name);
+					}
+
+					consts[node.name] = node.value;
 					break;
 				}
 				default: {

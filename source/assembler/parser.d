@@ -16,7 +16,8 @@ enum NodeType {
 	Register,
 	Integer,
 	RegPair,
-	Identifier
+	Identifier,
+	Define
 }
 
 class Node {
@@ -127,6 +128,15 @@ class IdentifierNode : Node {
 	}
 }
 
+class DefineNode : Node {
+	string name;
+	long   value;
+
+	this() {
+		type = NodeType.Define;
+	}
+}
+
 class ParserError : Exception {
 	this() {
 		super("", "", 0);
@@ -212,10 +222,28 @@ class Parser {
 		return ret;
 	}
 
+	Node ParseDefine() {
+		auto ret = new DefineNode();
+		Next();
+		Expect(TokenType.Identifier);
+		ret.name = tokens[i].contents;
+		Next();
+		Expect(TokenType.Integer);
+		ret.value = parse!long(tokens[i].contents);
+		Next();
+		Expect(TokenType.End);
+		return ret;
+	}
+
 	Node ParseStatement() {
 		switch (tokens[i].type) {
 			case TokenType.Label:      return ParseLabel();
-			case TokenType.Identifier: return ParseInstruction();
+			case TokenType.Identifier: {
+				switch (tokens[i].contents) {
+					case "define": return ParseDefine();
+					default:       return ParseInstruction();
+				}
+			}
 			default: {
 				Error("Unexpected %s token", tokens[i].type);
 				assert(0);
