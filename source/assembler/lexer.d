@@ -50,6 +50,10 @@ class Lexer {
 			reading = reading[2 .. $].to!long(16).text();
 			AddToken(TokenType.Integer);
 		}
+		else if (reading.startsWith("0b")) {
+			reading = reading[2 .. $].to!long(2).text();
+			AddToken(TokenType.Integer);
+		}
 		else {
 			AddToken(TokenType.Identifier);
 		}
