@@ -1,6 +1,8 @@
 module yeti16.assembler.lexer;
 
+import std.conv;
 import std.string;
+import std.algorithm;
 
 enum TokenType {
 	Null,
@@ -42,6 +44,10 @@ class Lexer {
 
 	void AddReading() {
 		if (reading.isNumeric()) {
+			AddToken(TokenType.Integer);
+		}
+		else if (reading.startsWith("0x")) {
+			reading = reading[2 .. $].to!long(16).text();
 			AddToken(TokenType.Integer);
 		}
 		else {

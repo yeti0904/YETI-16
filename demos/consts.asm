@@ -1,2 +1,2 @@
-define start 327680
+define start 0x050000
 jmp start
