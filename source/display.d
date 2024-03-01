@@ -19,11 +19,13 @@ struct VideoMode {
 	bool available = false;
 	
 	VideoModeType type;
+	ubyte         bpp;
 	Vec2!int      size;
 
-	this(VideoModeType ptype, Vec2!int psize) {
+	this(VideoModeType ptype, ubyte pbpp, Vec2!int psize) {
 		available = true;
 		type      = ptype;
+		bpp       = pbpp;
 		size      = psize;
 	}
 }
@@ -39,7 +41,8 @@ class Display {
 	VideoMode[256] videoModes;
 
 	this() {
-		videoModes[0x00] = VideoMode(VideoModeType.Bitmap, Vec2!int(320, 200));
+		videoModes[0x00] = VideoMode(VideoModeType.Bitmap, 8, Vec2!int(320, 200));
+		videoModes[0x10] = VideoMode(VideoModeType.Text,   4, Vec2!int(80,  40));
 	}
 
 	void Init() {
@@ -120,6 +123,39 @@ class Display {
 		pixels[(y * resolution.x) + x] = ColourToInt(r, g, b);
 	}
 
+	void SetMode(ubyte pmode) {
+		mode = pmode;
+		writefln("Setting video mode to %.2X", mode);
+
+		if (!videoModes[mode].available) return;
+
+		final switch (videoModes[mode].type) {
+			case VideoModeType.Bitmap: {
+				resolution = videoModes[mode].size;
+				break;
+			}
+			case VideoModeType.Text: {
+				resolution = Vec2!int(
+					videoModes[mode].size.x * 8,
+					videoModes[mode].size.y * 8
+				);
+				break;
+			}
+		}
+
+		pixels = new uint[](resolution.x * resolution.y);
+		SDL_DestroyTexture(texture);
+		texture = SDL_CreateTexture(
+			renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING,
+			resolution.x, resolution.y
+		);
+
+		if (texture is null) {
+			stderr.writefln("Failed to create texture: %s", GetError());
+			exit(1);
+		}
+	}
+
 	void Render() {
 		auto deathColour = SDL_Colour(255, 0, 0, 255);
 		auto mode        = videoModes[mode];
@@ -157,6 +193,59 @@ class Display {
 				break;
 			}
 			case VideoModeType.Text: {
+				uint paletteAddr = 0x000404;
+				uint fontAddr    = 0x000434;
+				uint dataAddr    = 0x000C34;
+
+				auto cellDim = mode.size;
+
+				SDL_SetRenderDrawColor(
+					renderer, emu.ram[paletteAddr], emu.ram[paletteAddr + 1],
+					emu.ram[paletteAddr + 2], 255
+				);
+				SDL_RenderClear(renderer);
+
+				for (uint y = 0; y < cellDim.y; ++ y) {
+					for (uint x = 0; x < cellDim.x; ++ x) {
+						uint    chAddr = dataAddr + (((y * cellDim.x) + x) * 2);
+						char    ch     = emu.ram[chAddr + 1];
+						ubyte[] chFont = emu.ram[
+							fontAddr + (ch * 8) .. fontAddr + ((ch * 8) + 8)
+						];
+
+						ubyte attr  = emu.ram[chAddr];
+						uint  fgCol = attr & 0x0F;
+						uint  bgCol = (attr & 0xF0) >> 4;
+
+						auto fg = SDL_Color(
+							emu.ram[paletteAddr + (fgCol * 3)],
+							emu.ram[paletteAddr + (fgCol * 3) + 1],
+							emu.ram[paletteAddr + (fgCol * 3) + 2],
+							255
+						);
+						auto bg = SDL_Color(
+							emu.ram[paletteAddr + (bgCol * 3)],
+							emu.ram[paletteAddr + (bgCol * 3) + 1],
+							emu.ram[paletteAddr + (bgCol * 3) + 2],
+							255
+						);
+
+						for (uint cx = 0; cx < 8; ++ cx) {
+							for (uint cy = 0; cy < 8; ++ cy) {
+								auto pixelPos = Vec2!uint((x * 8) + cx, (y * 8) + cy);
+
+								ubyte set = chFont[cy] & (1 << cx);
+
+								if (set) {
+									DrawPixel(pixelPos.x, pixelPos.y, fg.r, fg.g, fg.b);
+								}
+								else {
+									DrawPixel(pixelPos.x, pixelPos.y, bg.r, bg.g, bg.b);
+								}
+							}
+						}
+					}
+				}
 				break;
 			}
 		}

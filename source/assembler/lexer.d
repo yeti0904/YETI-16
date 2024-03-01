@@ -95,6 +95,19 @@ class Lexer {
 					AddToken(TokenType.End);
 					break;
 				}
+				case ';': {
+					if (reading.strip() != "") {
+						AddReading();
+					}
+
+					while (code[i] != '\n') {
+						++ i;
+						if (i >= code.length) break;
+					}
+
+					AddToken(TokenType.End);
+					break;
+				}
 				default: {
 					reading ~= code[i];
 				}

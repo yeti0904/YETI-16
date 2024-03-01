@@ -10,6 +10,7 @@ import yeti16.device;
 import yeti16.signed;
 import yeti16.display;
 import yeti16.devices.serial;
+import yeti16.devices.graphics;
 import yeti16.devices.debugging;
 
 enum Register : ubyte {
@@ -155,6 +156,7 @@ class Emulator {
 		display.Init();
 
 		devices[0] = new DebuggingDevice();
+		devices[2] = new GraphicsDevice();
 
 		if (enableSerial) {
 			devices[0x20] = new SerialDevice(4040, allowedIPs);
@@ -164,6 +166,7 @@ class Emulator {
 		size_t lastDevice;
 		foreach (i, ref dev ; devices) {
 			if (dev is null) continue;
+			dev.emu = this;
 
 			writefln(" - (%d) %s", i, dev.name);
 			lastDevice = i;
