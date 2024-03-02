@@ -31,8 +31,7 @@ loop:
 	brdb f cd ; Read character
 	cmp f e   ; Check if end of string
 	jzb end   ; Stop printing if end of string
-	;wrb ab g   Write attribute
-	incp ab
+	incp ab   ; Skip attribute
 	wrb ab f  ; Write character
 	incp ab
 	incp cd   ; Next character
