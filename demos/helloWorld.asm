@@ -11,6 +11,18 @@ ldsi b 0x02 ; load palette
 out a b
 
 lda ab 0x000C34
+ldi c 3200
+ldsi d 0x47 ; white on blue
+ldsi e 0
+clear:
+	wrb ab d
+	dec c
+	incp ab
+	incp ab
+	cmp c e
+	jnzb clear
+
+lda ab 0x000C34
 lda cd msg
 ldsi e 0
 ldsi g 0x0F
@@ -19,7 +31,7 @@ loop:
 	brdb f cd ; Read character
 	cmp f e   ; Check if end of string
 	jzb end   ; Stop printing if end of string
-	wrb ab g  ; Write attribute
+	;wrb ab g   Write attribute
 	incp ab
 	wrb ab f  ; Write character
 	incp ab

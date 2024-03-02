@@ -265,6 +265,7 @@ class Parser {
 					default:       return ParseInstruction();
 				}
 			}
+			case TokenType.End: return null;
 			default: {
 				Error("Unexpected %s token", tokens[i].type);
 				assert(0);
@@ -274,7 +275,11 @@ class Parser {
 
 	void Parse() {
 		for (i = 0; i < tokens.length; ++ i) {
-			nodes ~= ParseStatement();
+			auto node = ParseStatement();
+
+			if (node) {
+				nodes ~= node;
+			}
 		}
 	}
 }
