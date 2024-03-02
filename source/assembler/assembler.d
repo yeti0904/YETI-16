@@ -2,6 +2,7 @@ module yeti16.assembler.assembler;
 
 import std.stdio;
 import std.format;
+import std.algorithm;
 import yeti16.util;
 import yeti16.assembler.error;
 import yeti16.assembler.parser;
@@ -422,8 +423,68 @@ class Assembler {
 		throw new AssemblerError();
 	}
 
+	uint GetDataSize(InstructionNode node) {
+		// no error checking, leave that until later
+		uint size;
+
+		foreach (ref param ; node.params) {
+			switch (param.type) {
+				case NodeType.String: {
+					auto node2 = cast(StringNode) param;
+					size += node2.value.length;
+					break;
+				}
+				case NodeType.Integer: {
+					auto node2 = cast(IntegerNode) param;
+
+					switch (node.name) {
+						case "db": size += 1; break;
+						case "dw": size += 2; break;
+						case "da": size += 3; break;
+						default: assert(0);
+					}
+					break;
+				}
+				default: assert(0);
+			}
+		}
+
+		return size;
+	}
+
+	void DataInstruction(InstructionNode node) {
+		foreach (ref param ; node.params) {
+			switch (param.type) {
+				case NodeType.String: {
+					auto node2 = cast(StringNode) param;
+					
+					if (node.name != "db") {
+						Error(node.error, "String literals are only allowed in db");
+					}
+
+					bin ~= node2.value;
+					break;
+				}
+				case NodeType.Integer: {
+					auto node2 = cast(IntegerNode) param;
+
+					switch (node.name) {
+						case "db": bin ~= cast(ubyte) (node2.value & 0xFF); break;
+						case "dw": bin ~= NativeToYeti!ushort(cast(ushort) node2.value); break;
+						case "da": bin ~= AddrNativeToYeti(cast(uint) node2.value); break;
+						default:   assert(0);
+					}
+					break;
+				}
+				default: assert(0);
+			}
+		}
+	}
+
 	void Assemble() {
-		uint programSize;
+		uint     programSize;
+		string[] dataInstructions = ["db", "dw", "da"];
+
 		foreach (ref inode ; nodes) {
 			switch (inode.type) {
 				case NodeType.Label: {
@@ -433,6 +494,11 @@ class Assembler {
 				}
 				case NodeType.Instruction: {
 					auto node = cast(InstructionNode) inode;
+
+					if (dataInstructions.canFind(node.name)) {
+						programSize += GetDataSize(node);
+						break;
+					}
 
 					if (node.name !in insts) {
 						Error(node.error, "No such instruction '%s'", node.name);
@@ -475,6 +541,11 @@ class Assembler {
 								params ~= param;
 							}
 						}
+					}
+
+					if (dataInstructions.canFind(node.name)) {
+						DataInstruction(node);
+						break;
 					}
 
 					try {

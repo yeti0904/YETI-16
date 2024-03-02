@@ -15,6 +15,7 @@ enum NodeType {
 	Instruction,
 	Register,
 	Integer,
+	String,
 	RegPair,
 	Identifier,
 	Define
@@ -95,6 +96,23 @@ class IntegerNode : Node {
 
 	override string toString() {
 		return text(value);
+	}
+}
+
+class StringNode : Node {
+	string value;
+
+	this() {
+		type = NodeType.String;
+	}
+
+	this(string pvalue) {
+		type  = NodeType.String;
+		value = pvalue;
+	}
+
+	override string toString() {
+		return format("\"%s\"", value);
 	}
 }
 
@@ -201,6 +219,9 @@ class Parser {
 			}
 			case TokenType.Integer: {
 				return new IntegerNode(parse!long(tokens[i].contents));
+			}
+			case TokenType.String: {
+				return new StringNode(tokens[i].contents);
 			}
 			default: {
 				Error("Unexpected %s", tokens[i].contents);

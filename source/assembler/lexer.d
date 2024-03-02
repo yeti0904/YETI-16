@@ -8,6 +8,7 @@ enum TokenType {
 	Null,
 	Identifier,
 	Integer,
+	String,
 	Label,
 	End
 }
@@ -28,6 +29,7 @@ class Lexer {
 	size_t  col;
 	string  reading;
 	string  code;
+	bool    inString;
 
 	this() {
 		
@@ -69,47 +71,66 @@ class Lexer {
 				++ col;
 			}
 
-			switch (code[i]) {
-				case ',':
-				case ' ':
-				case '\t':
-				case '\n': {
-					if (reading.strip() == "") {
-						reading = "";
+			if (inString) {
+				switch (code[i]) {
+					case '"': {
+						inString = false;
+						AddToken(TokenType.String);
 						break;
 					}
-					
-					AddReading();
-
-					if (code[i] == '\n') {
-						if ((tokens.length > 0) && (tokens[$ - 1].type == TokenType.End)) {
+					default: reading ~= code[i];
+				}
+			}
+			else {
+				switch (code[i]) {
+					case ',':
+					case ' ':
+					case '\t':
+					case '\n': {
+						if (reading.strip() == "") {
+							reading = "";
 							break;
 						}
-						AddBlank(TokenType.End);
-					}
-					break;
-				}
-				case '\r': continue;
-				case ':': {
-					AddToken(TokenType.Label);
-					AddToken(TokenType.End);
-					break;
-				}
-				case ';': {
-					if (reading.strip() != "") {
+						
 						AddReading();
-					}
 
-					while (code[i] != '\n') {
-						++ i;
-						if (i >= code.length) break;
+						if (code[i] == '\n') {
+							if (
+								(tokens.length > 0) &&
+								(tokens[$ - 1].type == TokenType.End)
+							) {
+								break;
+							}
+							AddBlank(TokenType.End);
+						}
+						break;
 					}
+					case '"': {
+						inString = true;
+						break;
+					}
+					case '\r': continue;
+					case ':': {
+						AddToken(TokenType.Label);
+						AddToken(TokenType.End);
+						break;
+					}
+					case ';': {
+						if (reading.strip() != "") {
+							AddReading();
+						}
 
-					AddToken(TokenType.End);
-					break;
-				}
-				default: {
-					reading ~= code[i];
+						while (code[i] != '\n') {
+							++ i;
+							if (i >= code.length) break;
+						}
+
+						AddToken(TokenType.End);
+						break;
+					}
+					default: {
+						reading ~= code[i];
+					}
 				}
 			}
 		}
