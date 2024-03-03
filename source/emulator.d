@@ -141,17 +141,15 @@ class Emulator {
 	uint sr;
 
 	// system stuff
-	ubyte[]     ram;
-	bool        halted;
-	Display     display;
-	Device[256] devices;
+	ubyte[0x1000000] ram;
+	bool             halted;
+	Display          display;
+	Device[256]      devices;
 
 	// config
 	static const double speed = 20; // MHz
 
 	this(bool enableSerial, string[] allowedIPs) {
-		ram = uninitializedArray!(ubyte[])(0xFFFFFF);
-		
 		display     = new Display();
 		display.emu = this;
 		display.Init();
