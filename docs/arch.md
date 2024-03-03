@@ -138,13 +138,15 @@ Note: emulators don't have to implement any instructions that aren't in this tab
 | HLT      | `11111110`                                      | Stops execution of the program       |                |
 
 ## Instruction groups
-- Registers (LDI, CPR, CPP, LDA, LDSI)
-- Memory (WRB, WRW, WRA, RDB, RDW, RDA, BWRB, BWRW, BWRA, BRDB, BRDW, BRDA, PUSH, POP, PUSHA, POPA)
-- Arithmetic (ADD, SUB, MUL, DIV, MOD, INC, DEC, ADDP, SUBP, DIFF, INCP, DECP, CMP)
-- Bitwise (SHL, SHR, AND, OR, XOR, NOT)
-- IO (OUT, IN)
-- Jumps (JMP, JMPB, JZ, JNZ, JS, JNS, JC, JNC, JZB, JNZB, JSB, JNSB, JCB, JNCB)
-- Control (CALL, CALLB, RET, INT, HLT)
+The instruction group is stored in the first 3 bits of the opcode
+- 000 Misc (NOP)
+- 001 Registers (LDI, CPR, CPP, LDA, LDSI)
+- 010 Memory (WRB, WRW, WRA, RDB, RDW, RDA, BWRB, BWRW, BWRA, BRDB, BRDW, BRDA, PUSH, POP, PUSHA, POPA)
+- 011 Arithmetic (ADD, SUB, MUL, DIV, MOD, INC, DEC, ADDP, SUBP, DIFF, INCP, DECP, CMP)
+- 100 Bitwise (SHL, SHR, AND, OR, XOR, NOT)
+- 101 IO (OUT, IN)
+- 110 Jumps (JMP, JMPB, JZ, JNZ, JS, JNS, JC, JNC, JZB, JNZB, JSB, JNSB, JCB, JNCB)
+- 111 Control (CALL, CALLB, RET, INT, HLT)
 
 ## set_flags/CMP/set_flags_signed/ICMP
 The `CMP`/`ICMP` instruction uses the flags for different purposes, listed below:
