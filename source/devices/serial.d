@@ -1,5 +1,6 @@
 module yeti16.devices.serial;
 
+import std.array;
 import std.stdio;
 import std.socket;
 import std.algorithm;
@@ -96,7 +97,7 @@ class SerialDevice : Device {
 			}
 
 			incoming  = incoming[0 .. received];
-			data     ~= incoming;
+			data     ~= incoming.map!(b => cast(ushort) b).array();
 		}
 	}
 

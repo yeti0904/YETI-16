@@ -89,11 +89,12 @@ class Lexer {
 					case '\n': {
 						if (reading.strip() == "") {
 							reading = "";
-							break;
+							goto addLine;
 						}
 						
 						AddReading();
 
+						addLine:
 						if (code[i] == '\n') {
 							if (
 								(tokens.length > 0) &&
@@ -125,6 +126,8 @@ class Lexer {
 							if (i >= code.length) break;
 						}
 
+						++ line;
+						col = 0;
 						AddToken(TokenType.End);
 						break;
 					}

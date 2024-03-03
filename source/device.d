@@ -6,7 +6,7 @@ public import yeti16.emulator;
 class Device {
 	Emulator emu;
 	string   name;
-	ubyte[]  data; // read with IN
+	ushort[] data; // read with IN
 
 	abstract void Out(ushort dataIn);
 	abstract void Update();

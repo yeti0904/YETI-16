@@ -37,8 +37,9 @@ class Node {
 class LabelNode : Node {
 	string name;
 
-	this() {
-		type = NodeType.Label;
+	this(ErrorInfo perror) {
+		type  = NodeType.Label;
+		error = perror;
 	}
 
 	override string toString() {
@@ -50,8 +51,9 @@ class InstructionNode : Node {
 	string name;
 	Node[] params;
 
-	this() {
-		type = NodeType.Instruction;
+	this(ErrorInfo perror) {
+		type  = NodeType.Instruction;
+		error = perror;
 	}
 
 	override string toString() {
@@ -68,13 +70,15 @@ class InstructionNode : Node {
 class RegisterNode : Node {
 	string name;
 
-	this() {
-		type = NodeType.Register;
+	this(ErrorInfo perror) {
+		type  = NodeType.Register;
+		error = perror;
 	}
 
-	this(string pname) {
-		type = NodeType.Register;
-		name = pname;
+	this(ErrorInfo perror, string pname) {
+		type  = NodeType.Register;
+		name  = pname;
+		error = perror;
 	}
 
 	override string toString() {
@@ -85,13 +89,15 @@ class RegisterNode : Node {
 class IntegerNode : Node {
 	long value;
 
-	this() {
-		type = NodeType.Integer;
+	this(ErrorInfo perror) {
+		type  = NodeType.Integer;
+		error = perror;
 	}
 
-	this(long pvalue) {
+	this(ErrorInfo perror, long pvalue) {
 		type  = NodeType.Integer;
 		value = pvalue;
+		error = perror;
 	}
 
 	override string toString() {
@@ -102,13 +108,15 @@ class IntegerNode : Node {
 class StringNode : Node {
 	string value;
 
-	this() {
-		type = NodeType.String;
+	this(ErrorInfo perror) {
+		type  = NodeType.String;
+		error = perror;
 	}
 
-	this(string pvalue) {
+	this(ErrorInfo perror, string pvalue) {
 		type  = NodeType.String;
 		value = pvalue;
+		error = perror;
 	}
 
 	override string toString() {
@@ -119,13 +127,15 @@ class StringNode : Node {
 class RegPairNode : Node {
 	string name;
 
-	this() {
-		type = NodeType.RegPair;
+	this(ErrorInfo perror) {
+		type  = NodeType.RegPair;
+		error = perror;
 	}
 
-	this(string pname) {
-		type = NodeType.RegPair;
-		name = pname;
+	this(ErrorInfo perror, string pname) {
+		type  = NodeType.RegPair;
+		name  = pname;
+		error = perror;
 	}
 
 	override string toString() {
@@ -136,9 +146,10 @@ class RegPairNode : Node {
 class IdentifierNode : Node {
 	string name;
 
-	this(string pname = "") {
-		type = NodeType.Identifier;
-		name = pname;
+	this(ErrorInfo perror, string pname = "") {
+		type  = NodeType.Identifier;
+		name  = pname;
+		error = perror;
 	}
 
 	override string toString() {
@@ -150,8 +161,13 @@ class DefineNode : Node {
 	string name;
 	long   value;
 
-	this() {
-		type = NodeType.Define;
+	this(ErrorInfo perror) {
+		type  = NodeType.Define;
+		error = perror;
+	}
+
+	override string toString() {
+		return format("define %s %d", name, value);
 	}
 }
 
@@ -196,7 +212,7 @@ class Parser {
 	}
 
 	Node ParseLabel() {
-		auto ret = new LabelNode();
+		auto ret = new LabelNode(GetError());
 
 		ret.name = tokens[i].contents;
 		Next();
@@ -208,20 +224,20 @@ class Parser {
 		switch (tokens[i].type) {
 			case TokenType.Identifier: {
 				if (Language.registers.canFind(tokens[i].contents)) {
-					return new RegisterNode(tokens[i].contents);
+					return new RegisterNode(GetError(), tokens[i].contents);
 				}
 				else if (Language.regPairs.canFind(tokens[i].contents)) {
-					return new RegPairNode(tokens[i].contents);
+					return new RegPairNode(GetError(), tokens[i].contents);
 				}
 				else {
-					return new IdentifierNode(tokens[i].contents);
+					return new IdentifierNode(GetError(), tokens[i].contents);
 				}
 			}
 			case TokenType.Integer: {
-				return new IntegerNode(parse!long(tokens[i].contents));
+				return new IntegerNode(GetError(), parse!long(tokens[i].contents));
 			}
 			case TokenType.String: {
-				return new StringNode(tokens[i].contents);
+				return new StringNode(GetError(), tokens[i].contents);
 			}
 			default: {
 				Error("Unexpected %s", tokens[i].contents);
@@ -231,7 +247,7 @@ class Parser {
 	}
 
 	Node ParseInstruction() {
-		auto ret = new InstructionNode();
+		auto ret = new InstructionNode(GetError());
 		ret.name = tokens[i].contents;
 		Next();
 
@@ -244,7 +260,7 @@ class Parser {
 	}
 
 	Node ParseDefine() {
-		auto ret = new DefineNode();
+		auto ret = new DefineNode(GetError());
 		Next();
 		Expect(TokenType.Identifier);
 		ret.name = tokens[i].contents;

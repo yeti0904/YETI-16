@@ -11,6 +11,7 @@ import yeti16.signed;
 import yeti16.display;
 import yeti16.devices.serial;
 import yeti16.devices.graphics;
+import yeti16.devices.keyboard;
 import yeti16.devices.debugging;
 
 enum Register : ubyte {
@@ -156,6 +157,7 @@ class Emulator {
 		display.Init();
 
 		devices[0] = new DebuggingDevice();
+		devices[1] = new KeyboardDevice();
 		devices[2] = new GraphicsDevice();
 
 		if (enableSerial) {
@@ -337,7 +339,7 @@ class Emulator {
 
 	uint ReadAddr(uint addr) {
 		return (cast(uint) ram[addr]) | (cast(uint) ram[addr + 1] << 8) |
-		       (cast(uint) ram[addr + 1] << 16);
+		       (cast(uint) ram[addr + 2] << 16);
 	}
 
 	void WriteAddr(uint addr, uint value) {
@@ -794,11 +796,11 @@ class Emulator {
 				auto addr = NextAddr();
 				sp -= 3;
 				WriteAddr(sp, ip);
-				ip = addr;
 
 				if (op == Instruction.CALLB) {
-					ip += bs;
+					addr += bs;
 				}
+				ip = addr;
 				break;
 			}
 			case Instruction.RET: {
@@ -835,6 +837,7 @@ class Emulator {
 		auto   instPerFrame  = cast(uint) ((Emulator.speed * 1000000) / 60);
 
 		ip = 0x050000;
+		sp = 0x0F0000;
 		bs = ip;
 
 		while (!halted) {
@@ -844,7 +847,13 @@ class Emulator {
 			while (SDL_PollEvent(&e)) {
 				switch (e.type) {
 					case SDL_QUIT: return;
-					default:       break;
+					default: {
+						foreach (ref dev ; devices) {
+							if (dev is null) continue;
+							dev.HandleEvent(&e);
+						}
+						break;
+					}
 				}
 			}
 

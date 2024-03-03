@@ -524,10 +524,14 @@ class Assembler {
 								auto node2 = cast(IdentifierNode) param;
 
 								if (node2.name in labels) {
-									params ~= new IntegerNode(labels[node2.name]);
+									params ~= new IntegerNode(
+										param.error, labels[node2.name]
+									);
 								}
 								else if (node2.name in consts) {
-									params ~= new IntegerNode(consts[node2.name]);
+									params ~= new IntegerNode(
+										param.error, consts[node2.name]
+									);
 								}
 								else {
 									Error(
