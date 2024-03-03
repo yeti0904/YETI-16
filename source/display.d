@@ -44,6 +44,9 @@ class Display {
 	this() {
 		videoModes[0x00] = VideoMode(VideoModeType.Bitmap, 8, Vec2!int(320, 200));
 		videoModes[0x10] = VideoMode(VideoModeType.Text,   4, Vec2!int(80,  40));
+		videoModes[0x11] = VideoMode(VideoModeType.Text,   4, Vec2!int(40,  40));
+		videoModes[0x12] = VideoMode(VideoModeType.Text,   4, Vec2!int(40,  20));
+		videoModes[0x13] = VideoMode(VideoModeType.Text,   4, Vec2!int(20,  20));
 	}
 
 	void Init() {

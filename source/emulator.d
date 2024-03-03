@@ -302,6 +302,9 @@ class Emulator {
 	ubyte NextByte() {
 		ubyte ret = ram[ip];
 		++ ip;
+		if (ip > 0xFFFFFF) {
+			ip = 0;
+		}
 		return ret;
 	}
 
