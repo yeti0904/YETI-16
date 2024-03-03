@@ -4,6 +4,7 @@ import std.file;
 import std.path;
 import std.stdio;
 import std.string;
+import std.process;
 import bindbc.sdl;
 import yeti16.util;
 import yeti16.types;
@@ -46,6 +47,11 @@ class Display {
 	}
 
 	void Init() {
+		// make SDL use wayland if wayland is running
+		if (environment.get("XDG_SESSION_TYPE", "") == "wayland") {
+			environment["SDL_VIDEODRIVER"] = "wayland";
+		}
+
 		string appPath = dirName(thisExePath());
 	
 		version (Windows) {
