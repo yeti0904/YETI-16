@@ -113,9 +113,11 @@ void main(string[] args) {
 			}
 			catch (FileException e) {
 				stderr.writefln("%s: %s", file, e.msg);
+				exit(1);
 			}
 			catch (UTFException e) {
 				stderr.writefln("%s: %s", file, e.msg);
+				exit(1);
 			}
 
 			auto lexer     = new Lexer();
