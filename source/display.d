@@ -163,6 +163,8 @@ class Display {
 			stderr.writefln("Failed to create texture: %s", GetError());
 			exit(1);
 		}
+
+		SDL_RenderSetLogicalSize(renderer, resolution.x, resolution.y);
 	}
 
 	void Render() {
