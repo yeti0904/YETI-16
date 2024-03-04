@@ -8,8 +8,8 @@ import yeti16.device;
 
 
 class MouseDevice : Device {
-	ubyte mouseX = 40;
-	ubyte mouseY = 25;
+	ubyte mouseX  = 40;
+	ubyte mouseY  = 25;
 	ubyte mouseBx = 80;
 	ubyte mouseBy = 40;
 
@@ -22,33 +22,22 @@ class MouseDevice : Device {
 			case 0x0000: { // Reset mouse pos to center
 				mouseX = cast(ubyte) floor(cast(float) mouseBx / 2.0);
 				mouseY = cast(ubyte) floor(cast(float) mouseBy / 2.0);
-
-				writef("Mouse position set to %d, %d", mouseX, mouseY);
-				stdout.flush();
 				break;
 			}
 			case 0x0100: { // Set X bound
 				mouseBx = (dataIn & 0x00ff);
-				writef("Mouse bounds set to %d, %d\n", mouseBx, this.mouseBy);
-				stdout.flush();
 				break;
 			}
 			case 0x0200: { // Set Y bound
 				mouseBy = (dataIn & 0x00ff);
-				writef("Mouse bounds set to %d, %d\n", this.mouseBx, mouseBy);
-				stdout.flush();
 				break;
 			}
 			case 0x0300: { // Set X pos
 				mouseX = (dataIn & 0x00ff);
-				writef("Mouse position set to %d, %d\n", mouseX, this.mouseY);
-				stdout.flush();
 				break;
 			}
 			case 0x0400: { // Set Y pos
 				mouseY = (dataIn & 0x00ff);
-				writef("Mouse position set to %d, %d\n", this.mouseX, mouseY);
-				stdout.flush();
 				break;
 			}
 			default: break; // no errors!!
@@ -62,7 +51,6 @@ class MouseDevice : Device {
 	override void HandleEvent(SDL_Event* e) {
 		switch (e.type) {
 			case SDL_MOUSEMOTION: {	
-				// TODO: Fix to scale properly to screen size
 				ubyte newMouseX = cast(ubyte) min(max(e.motion.x, 0), 320) / 4;
 				ubyte newMouseY = cast(ubyte) min(max(e.motion.x, 0), 200) / 4;
 
@@ -98,7 +86,8 @@ class MouseDevice : Device {
 				if (scroll > 0) {
 					data ~= 0x05;
 					data ~= cast(ubyte) scroll;
-				} else {
+				} 
+				else {
 					data ~= 0x06;
 					data ~= cast(ubyte) -scroll;
 				}
