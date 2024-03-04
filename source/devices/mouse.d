@@ -20,8 +20,8 @@ class MouseDevice : Device {
 	override void Out(ushort dataIn) {
 		switch (dataIn & 0xff00)   {
 			case 0x0000: { // Reset mouse pos to center
-				mouseX = cast(ubyte)floor((cast(float)mouseBx) / 2.0);
-				mouseY = cast(ubyte)floor((cast(float)mouseBy) / 2.0);
+				mouseX = cast(ubyte) floor(cast(float) mouseBx / 2.0);
+				mouseY = cast(ubyte) floor(cast(float) mouseBy / 2.0);
 
 				writef("Mouse position set to %d, %d", mouseX, mouseY);
 				stdout.flush();
@@ -63,8 +63,8 @@ class MouseDevice : Device {
 		switch (e.type) {
 			case SDL_MOUSEMOTION: {	
 				// TODO: Fix to scale properly to screen size
-				ubyte newMouseX = (cast(ubyte)(min(max(e.motion.x, 0), 320)) / 4);
-				ubyte newMouseY = (cast(ubyte)(min(max(e.motion.x, 0), 200)) / 4);
+				ubyte newMouseX = cast(ubyte) min(max(e.motion.x, 0), 320) / 4;
+				ubyte newMouseY = cast(ubyte) min(max(e.motion.x, 0), 200) / 4;
 
 				if (mouseX != newMouseX) {
 					data ~= 0x01;
@@ -82,12 +82,12 @@ class MouseDevice : Device {
 			}
 			case SDL_MOUSEBUTTONDOWN: {
 				data ~= 0x03;
-				data ~= cast(ubyte)(e.button.button);
+				data ~= cast(ubyte) e.button.button;
 				break;
 			}
 			case SDL_MOUSEBUTTONUP: {
 				data ~= 0x04;
-				data ~= cast(ubyte)(e.button.button);
+				data ~= cast(ubyte) e.button.button;
 				break;
 			}
 			case SDL_MOUSEWHEEL: {
@@ -97,10 +97,10 @@ class MouseDevice : Device {
 
 				if (scroll > 0) {
 					data ~= 0x05;
-					data ~= cast(ubyte)scroll;
+					data ~= cast(ubyte) scroll;
 				} else {
 					data ~= 0x06;
-					data ~= cast(ubyte)-scroll;
+					data ~= cast(ubyte) -scroll;
 				}
 
 				break;
