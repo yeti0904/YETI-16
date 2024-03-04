@@ -9,6 +9,7 @@ import bindbc.sdl;
 import yeti16.device;
 import yeti16.signed;
 import yeti16.display;
+import yeti16.devices.mouse;
 import yeti16.devices.serial;
 import yeti16.devices.graphics;
 import yeti16.devices.keyboard;
@@ -157,6 +158,7 @@ class Emulator {
 		devices[0] = new DebuggingDevice();
 		devices[1] = new KeyboardDevice();
 		devices[2] = new GraphicsDevice();
+		devices[3] = new MouseDevice();
 
 		if (enableSerial) {
 			devices[0x20] = new SerialDevice(4040, allowedIPs);
