@@ -13,6 +13,7 @@ import yeti16.devices.serial;
 import yeti16.devices.graphics;
 import yeti16.devices.keyboard;
 import yeti16.devices.debugging;
+import yeti16.devices.mouse;
 
 enum Register : ubyte {
 	A = 0,
@@ -157,6 +158,7 @@ class Emulator {
 		devices[0] = new DebuggingDevice();
 		devices[1] = new KeyboardDevice();
 		devices[2] = new GraphicsDevice();
+		devices[3] = new MouseDevice();
 
 		if (enableSerial) {
 			devices[0x20] = new SerialDevice(4040, allowedIPs);
