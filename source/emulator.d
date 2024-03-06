@@ -158,10 +158,10 @@ class Emulator {
 	uint sr;
 
 	// system stuff
-	ubyte[0x1000000] ram;
-	bool             halted;
-	Display          display;
-	Device[256]      devices;
+	private ubyte[0x1000000] ram;
+	bool                     halted;
+	Display                  display;
+	Device[256]              devices;
 
 	// config
 	static const double speed = 20; // MHz
@@ -350,6 +350,23 @@ class Emulator {
 		*n2        = value & 0x0F;
 	}
 
+	ubyte ReadByte(uint addr) {
+		if (addr <= 3) CPUError(Error.NullAccess);
+		return ram[addr];
+	}
+
+	ubyte[] ReadBytes(uint start, uint end) {
+		if (start <= 3) CPUError(Error.NullAccess);
+		assert(end >= start);
+
+		return ram[start .. end];
+	}
+
+	void WriteByte(uint addr, ubyte value) {
+		if (addr <= 3) CPUError(Error.NullAccess);
+		ram[addr] = value;
+	}
+
 	ushort ReadWord(uint addr) {
 		if (addr <= 3) CPUError(Error.NullAccess);
 		return (cast(ushort) ram[addr]) | (cast(ushort) ram[addr + 1] << 8);
@@ -503,7 +520,7 @@ class Emulator {
 
 					switch (size) {
 						case 0: {
-							ram[addr] = cast(ubyte) ReadRegister(valueReg);
+							WriteByte(addr, cast(ubyte) ReadRegister(valueReg));
 							SetValueFlags(ReadRegister(valueReg));
 							break;
 						}
@@ -532,7 +549,7 @@ class Emulator {
 
 					switch (size) {
 						case 0: {
-							WriteRegister(resultReg, ram[addr]);
+							WriteRegister(resultReg, ReadByte(addr));
 							SetValueFlags(ReadRegister(resultReg));
 							break;
 						}
@@ -861,7 +878,7 @@ class Emulator {
 			case Instruction.INT: {
 				uint interrupt = NextByte();
 
-				ubyte iflags = ram[(interrupt * 4) + 4];
+				ubyte iflags = ReadByte((interrupt * 4) + 4);
 
 				if (!iflags) CPUError(Error.BadInterrupt);
 

@@ -35,7 +35,7 @@ class GraphicsDevice : Device {
 						uint fontAddr = 0x000434;
 
 						foreach (i, ref b ; font8x8) {
-							emu.ram[fontAddr + i] = b;
+							emu.WriteByte(cast(uint) (fontAddr + i), b);
 						}
 						break;
 					}
@@ -54,7 +54,7 @@ class GraphicsDevice : Device {
 						}
 
 						foreach (i, ref b ; palette) {
-							emu.ram[paletteAddr + i] = b;
+							emu.WriteByte(cast(uint) (paletteAddr + i), b);
 						}
 						break;
 					}
