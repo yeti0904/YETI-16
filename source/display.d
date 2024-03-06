@@ -11,6 +11,8 @@ import yeti16.types;
 import yeti16.palette;
 import yeti16.emulator;
 
+private static auto appIcon = cast(ubyte[]) import("images/icon.bmp");
+
 enum VideoModeType {
 	Bitmap,
 	Text
@@ -36,6 +38,7 @@ class Display {
 	SDL_Window*    window;
 	SDL_Renderer*  renderer;
 	SDL_Texture*   texture;
+	SDL_Surface*   icon;
 	uint[]         pixels;
 	Vec2!int       resolution = Vec2!int(320, 200);
 	ubyte          mode;
@@ -105,6 +108,21 @@ class Display {
 			stderr.writefln("Failed to create texture: %s", GetError());
 			exit(1);
 		}
+
+		auto iconRW = SDL_RWFromMem(cast(void*) appIcon.ptr, cast(int) appIcon.length);
+
+		if (iconRW is null) {
+			stderr.writefln("Failed to load app icon: %s", GetError());
+			exit(1);
+		}
+
+		icon = SDL_LoadBMP_RW(iconRW, 1);
+		if (icon is null) {
+			stderr.writefln("Failed to load app icon surface: %s", GetError());
+			exit(1);
+		}
+
+		SDL_SetWindowIcon(window, icon);
 
 		pixels = new uint[](resolution.x * resolution.y);
 		SDL_RenderSetLogicalSize(renderer, resolution.x, resolution.y);

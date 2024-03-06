@@ -8,5 +8,8 @@
 	},
 	"description": "YETI-16 Mk 2: a 16-bit fantasy computer",
 	"license": "MIT",
-	"name": "yeti-16"
+	"name": "yeti-16",
+	"dflags": [
+		"-J."
+	]
 }

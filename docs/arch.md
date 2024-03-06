@@ -182,9 +182,13 @@ Flags:
 - (& 0b00000001) Active flag - whether the interrupt is active or not
 
 These interrupts are called for the following errors
-- 0x00 - read/write to null (addresses from 0 to 4)
-- 0x01 - divide by 0
-- 0x02 - bad parameter
-- 0x03 - called unactive interrupt
+- 0x00 - Bad parameter (invalid register etc)
+- 0x01 - Invalid device
+- 0x02 - Device empty (nothing can be read)
+- 0x03 - Bad interrupt (the interrupt isn't enabled)
+- 0x04 - Divide by 0
+- 0x05 - Null access
+- 0x06 - Halted
+- 0x07 - Invalid opcode
 
 All interrupts from 0x00 to 0x1F are reserved

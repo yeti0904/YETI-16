@@ -43,6 +43,17 @@ enum Flag : ubyte {
 	Carry   = 0b00000100
 }
 
+enum Error : ubyte {
+	BadParameter  = 0x00,
+	InvalidDevice = 0x01,
+	DeviceEmpty   = 0x02,
+	BadInterrupt  = 0x03,
+	DivideBy0     = 0x04,
+	NullAccess    = 0x05,
+	Halted        = 0x06,
+	InvalidOpcode = 0x07
+}
+
 enum Instruction : ubyte {
 	NOP   = 0b00000000,
 	LDI   = 0b00100000,
@@ -119,6 +130,12 @@ enum Instruction : ubyte {
 	RET   = 0b11111100,
 	INT   = 0b11111101,
 	HLT   = 0b11111110
+}
+
+class InstructionException : Exception {
+	this() {
+		super("", "", 0);
+	}
 }
 
 class Emulator {
@@ -219,8 +236,10 @@ class Emulator {
 			case Register.F: return f;
 			case Register.G: return g;
 			case Register.H: return h;
-			default:         assert(0); // TODO: error
+			default:         CPUError(Error.BadParameter);
 		}
+
+		return 0; // comment this out if errors
 	}
 
 	ushort ReadRegister(ubyte reg) {
@@ -237,7 +256,7 @@ class Emulator {
 			case Register.F: f = value; break;
 			case Register.G: g = value; break;
 			case Register.H: h = value; break;
-			default:         assert(0); // TODO: error
+			default:         CPUError(Error.BadParameter); break;
 		}
 	}
 
@@ -256,8 +275,10 @@ class Emulator {
 			case RegPair.BS: return bs;
 			case RegPair.DS: return ds;
 			case RegPair.SR: return sr;
-			default:         assert(0); // TODO: error
+			default:         CPUError(Error.BadParameter);
 		}
+
+		return 0; // comment out if errors
 	}
 
 	uint ReadRegPair(ubyte reg) {
@@ -291,7 +312,7 @@ class Emulator {
 			case RegPair.BS: bs = value; break;
 			case RegPair.DS: ds = value; break;
 			case RegPair.SR: sr = value; break;
-			default: assert(0); // TODO: error
+			default: CPUError(Error.BadParameter);
 		}
 	}
 
@@ -330,20 +351,24 @@ class Emulator {
 	}
 
 	ushort ReadWord(uint addr) {
+		if (addr <= 3) CPUError(Error.NullAccess);
 		return (cast(ushort) ram[addr]) | (cast(ushort) ram[addr + 1] << 8);
 	}
 
 	void WriteWord(uint addr, ushort value) {
+		if (addr <= 3) CPUError(Error.NullAccess);
 		ram[addr]     = cast(ubyte) (value & 0xFF);
 		ram[addr + 1] = cast(ubyte) ((value & 0xFF00) >> 8);
 	}
 
 	uint ReadAddr(uint addr) {
+		if (addr <= 3) CPUError(Error.NullAccess);
 		return (cast(uint) ram[addr]) | (cast(uint) ram[addr + 1] << 8) |
 		       (cast(uint) ram[addr + 2] << 16);
 	}
 
 	void WriteAddr(uint addr, uint value) {
+		if (addr <= 3) CPUError(Error.NullAccess);
 		ram[addr]     = cast(ubyte) (value & 0xFF);
 		ram[addr + 1] = cast(ubyte) ((value & 0xFF00) >> 8);
 		ram[addr + 2] = cast(ubyte) ((value & 0xFF0000) >> 16);
@@ -353,9 +378,23 @@ class Emulator {
 		ram[where .. where + data.length] = data;
 	}
 
-	void Error(Char, A...)(in Char[] fmt, A args) {
+	void EmuError(Char, A...)(in Char[] fmt, A args) {
 		stderr.writeln(format(fmt, args));
 		halted = true;
+		throw new InstructionException();
+	}
+
+	void CPUError(Error error) {
+		uint addr = 0x000004 + cast(uint) (error * 4);
+
+		if (!ram[addr]) {
+			EmuError("CPU error: %s", error);
+			return;
+		}
+
+		sp -= 3;
+		WriteAddr(sp, ip);
+		ip = ReadAddr(addr + 1);
 	}
 
 	void DumpState() {
@@ -478,7 +517,7 @@ class Emulator {
 							SetValueFlags(ReadRegPair(valueReg));
 							break;
 						}
-						default: assert(0); // TODO: error
+						default: CPUError(Error.BadParameter);
 					}
 				}
 				else { // read
@@ -507,7 +546,7 @@ class Emulator {
 							SetValueFlags(ReadRegPair(resultReg));
 							break;
 						}
-						default: assert(0); // TODO: error
+						default: CPUError(Error.BadParameter);
 					}
 				}
 				break;
@@ -551,13 +590,23 @@ class Emulator {
 					case Instruction.ADD: res = v1 + v2; break;
 					case Instruction.SUB: res = v1 - v2; break;
 					case Instruction.MUL: res = v1 * v2; break;
-					case Instruction.DIV: res = v1 / v2; break;
-					case Instruction.MOD: res = v1 % v2; break;
+					case Instruction.DIV: {
+						if (v2 == 0) CPUError(Error.DivideBy0);
+						res = v1 / v2;
+						break;
+					}
+					case Instruction.MOD: {
+						if (v2 == 0) CPUError(Error.DivideBy0);
+						res = v1 % v2;
+						break;
+					}
 					case Instruction.IDIV: {
+						if (v2 == 0) CPUError(Error.DivideBy0);
 						WriteRegister(dest, ToUnsigned(ToSigned(v1) / ToSigned(v2)));
 						break;
 					}
 					case Instruction.IMOD: {
+						if (v2 == 0) CPUError(Error.DivideBy0);
 						WriteRegister(dest, ToUnsigned(ToSigned(v1) % ToSigned(v2)));
 						break;
 					}
@@ -731,7 +780,7 @@ class Emulator {
 				auto dev   = ReadRegister(devReg) & 0xFF;
 				auto value = ReadRegister(valueReg);
 
-				if (devices[dev] is null) assert(0); // TODO: error
+				if (devices[dev] is null) CPUError(Error.InvalidDevice);
 
 				devices[dev].Out(value);
 				break;
@@ -743,8 +792,8 @@ class Emulator {
 
 				auto dev = ReadRegister(devReg) & 0xFF;
 
-				if (devices[dev] is null) assert(0); // TODO: error
-				if (devices[dev].data.empty) assert(0); // TODO: error
+				if (devices[dev] is null)    CPUError(Error.InvalidDevice);
+				if (devices[dev].data.empty) CPUError(Error.DeviceEmpty);
 
 				WriteRegister(destReg, devices[dev].data[0]);
 				devices[dev].data = devices[dev].data[1 .. $];
@@ -754,7 +803,7 @@ class Emulator {
 				auto devReg = Next1Nibble();
 				auto dev    = ReadRegister(devReg) & 0xFF;
 
-				if (devices[dev] is null) assert(0); // TODO: error
+				if (devices[dev] is null) CPUError(Error.InvalidDevice);
 
 				SetFlag(Flag.Zero, devices[dev].data.empty? 0 : 1);
 				break;
@@ -782,7 +831,7 @@ class Emulator {
 					case 1: doJump = GetFlag(Flag.Zero); break;
 					case 2: doJump = GetFlag(Flag.Sign); break;
 					case 3: doJump = GetFlag(Flag.Carry); break;
-					default: assert(0); // TODO: error
+					default: CPUError(Error.BadParameter);
 				}
 
 				if (not) doJump = !doJump;
@@ -814,7 +863,7 @@ class Emulator {
 
 				ubyte iflags = ram[(interrupt * 4) + 4];
 
-				if (!iflags) assert(0); // TODO: error
+				if (!iflags) CPUError(Error.BadInterrupt);
 
 				auto addr  = ReadAddr((interrupt * 4) + 5);
 				sp        -= 3;
@@ -828,7 +877,7 @@ class Emulator {
 				return;
 			}
 			default: {
-				Error("Invalid opcode %.2X", op);
+				CPUError(Error.InvalidOpcode);
 			}
 		}
 	}
@@ -859,7 +908,13 @@ class Emulator {
 			}
 
 			foreach (i ; 0 .. instPerFrame) {
-				RunInstruction();
+				try {
+					RunInstruction();
+				}
+				catch (InstructionException) {
+					break;
+				}
+
 				if (halted) {
 					break;
 				}
