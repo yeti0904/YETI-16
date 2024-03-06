@@ -182,6 +182,7 @@ private static Keycode[SDL_Scancode] keys;
 
 class KeyboardDevice : Device {
 	bool asciiTranslation;
+	bool enableEvents = false;
 
 	this() {
 		name = "YETI-16 Keyboard";
@@ -200,6 +201,14 @@ class KeyboardDevice : Device {
 				SDL_StopTextInput();
 				break;
 			}
+			case 0x02: { // enable keyboard events
+				enableEvents = true;
+				break;
+			}
+			case 0x03: { // disable keyboard events
+				enableEvents = false;
+				break;
+			}
 			default: break; // no errors!!
 		}
 	}
@@ -209,6 +218,8 @@ class KeyboardDevice : Device {
 	}
 
 	override void HandleEvent(SDL_Event* e) {
+		if (!enableEvents) return;
+
 		switch (e.type) {
 			case SDL_TEXTINPUT: {
 				foreach (ref ch ; e.text.text.fromStringz()) {

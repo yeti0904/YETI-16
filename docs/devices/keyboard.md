@@ -12,6 +12,12 @@ Enables ASCII character input events
 #### 0x01 - Disable ASCII translation
 Disables ASCII character input events
 
+#### 0x02 - Enable keyboard events
+Enables sending keyboard events through `in`
+
+#### 0x03 - Disable keyboard events
+Disables sending keyboard events through `in`
+
 ### In
 The keyboard sends events through `in`, they all start with 1 value which is the event
 type

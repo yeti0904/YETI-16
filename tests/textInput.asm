@@ -11,6 +11,8 @@ ldsi b 0x02 ; load palette
 out a b
 
 ldsi a 1    ; Keyboard device
+ldsi b 0x02 ; Enable keyboard events
+out a b
 ldsi b 0x00 ; Enable ASCII translation
 out a b
 ldsi c 0x00 ; ASCII input event
