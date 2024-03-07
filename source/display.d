@@ -73,7 +73,18 @@ class Display {
 		}
 	
 		if (res != sdlSupport) {
-			stderr.writeln("No SDL support");
+			stderr.writefln("No SDL support");
+
+			if (res == SDLSupport.noLibrary) {
+				stderr.writeln("Library not available");
+			}
+			else if (res == SDLSupport.badLibrary) {
+				stderr.writeln("SDL2 is likely outdated");
+			}
+			else {
+				stderr.writeln("Unknown cause");
+			}
+
 			exit(1);
 		}
 
