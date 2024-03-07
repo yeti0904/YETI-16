@@ -16,10 +16,12 @@ Usage: %s OPERATION [flags]
 Operations:
 	run FILE [read flags]      - runs the given binary file in the emulator
 	asm FILE [-o out_file.bin] - assembles the given file (to \"out.bin\" by default)
+	new_disk FILE SECTORS      - creates a disk at FILE with SECTORS sectors
 
 Run flags:
 	--serial        : Enables the serial port (port 4040)
 	--allow-ip <IP> : Adds an IP to the serial port whitelist
+	--disk <PATH>   : Loads the given disk
 ";
 
 void main(string[] args) {
@@ -42,6 +44,7 @@ void main(string[] args) {
 
 			bool     enableSerial;
 			string[] allowedIPs = ["127.0.0.1", "0.0.0.0"];
+			string[] disks;
 
 			for (size_t i = 3; i < args.length; ++ i) {
 				switch (args[i]) {
@@ -54,6 +57,11 @@ void main(string[] args) {
 						allowedIPs ~= args[i];
 						break;
 					}
+					case "--disk": {
+						++ i;
+						disks ~= args[i];
+						break;
+					}
 					default: {
 						stderr.writefln("Unknown flag %s", args[i]);
 						exit(1);
@@ -61,7 +69,7 @@ void main(string[] args) {
 				}
 			}
 			
-			auto    emulator = new Emulator(enableSerial, allowedIPs);
+			auto    emulator = new Emulator(enableSerial, allowedIPs, disks);
 			ubyte[] program;
 
 			try {

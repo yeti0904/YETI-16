@@ -6,9 +6,11 @@ import std.format;
 import std.datetime.stopwatch;
 import core.thread;
 import bindbc.sdl;
+import yeti16.util;
 import yeti16.device;
 import yeti16.signed;
 import yeti16.display;
+import yeti16.devices.disk;
 import yeti16.devices.serial;
 import yeti16.devices.graphics;
 import yeti16.devices.keyboard;
@@ -166,7 +168,7 @@ class Emulator {
 	// config
 	static const double speed = 20; // MHz
 
-	this(bool enableSerial, string[] allowedIPs) {
+	this(bool enableSerial, string[] allowedIPs, string[] disks) {
 		display     = new Display();
 		display.emu = this;
 		display.Init();
@@ -174,6 +176,15 @@ class Emulator {
 		devices[0] = new DebuggingDevice();
 		devices[1] = new KeyboardDevice();
 		devices[2] = new GraphicsDevice();
+
+		if (disks.length > 8) {
+			stderr.writefln("Only 8 disks can be connected to the YETI-16 system");
+			exit(1);
+		}
+
+		foreach (i, ref disk ; disks) {
+			devices[0xF7 + i] = new DiskDevice(disk);
+		}
 
 		if (enableSerial) {
 			devices[0x20] = new SerialDevice(4040, allowedIPs);
