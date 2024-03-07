@@ -423,6 +423,11 @@ class Assembler {
 		throw new AssemblerError();
 	}
 
+	void Warn(Char, A...)(ErrorInfo info, in Char[] fmt, A args) {
+		WarningBegin(info);
+		stderr.writeln(format(fmt, args));
+	}
+
 	uint GetDataSize(InstructionNode node) {
 		// no error checking, leave that until later
 		uint size;
@@ -518,6 +523,11 @@ class Assembler {
 					auto   node = cast(InstructionNode) inode;
 					Node[] params;
 
+					string[] noLabelInsts = [
+						"wrb", "wrw", "wra", "rdb", "rdw", "rda", "jmp", "jz", "jnz",
+						"js", "jns", "jc", "jnc"
+					];
+
 					foreach (ref param ; node.params) {
 						switch (param.type) {
 							case NodeType.Identifier: {
@@ -527,6 +537,12 @@ class Assembler {
 									params ~= new IntegerNode(
 										param.error, labels[node2.name]
 									);
+									if (noLabelInsts.canFind(node.name)) {
+										Warn(
+											param.error,
+											"Label used in instruction that doesn't use BS"
+										);
+									}
 								}
 								else if (node2.name in consts) {
 									params ~= new IntegerNode(
