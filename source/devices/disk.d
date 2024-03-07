@@ -12,8 +12,8 @@ enum DiskStatus {
 }
 
 class DiskDevice : Device {
-	File    file;
-	ubyte[] outData;
+	File     file;
+	ushort[] outData;
 
 	static const uint sectorSize = 512;
 
@@ -42,30 +42,36 @@ class DiskDevice : Device {
 	}
 
 	uint GetSectorAmount() {
+		writefln("Disk size: %d", file.size());
+		writefln("Sector amount: %d", file.size() / sectorSize);
 		return cast(uint) (file.size() / sectorSize);
 	}
 
 	override void Out(ushort dataIn) {
-		outData ~= cast(ubyte) dataIn;
+		outData ~= dataIn;
 
 		switch (outData[0]) {
 			case 0x00: {
 				outData = [];
 				Send32Bit(GetSectorAmount());
+				writeln("Sending disk size");
 				break;
 			}
 			case 0x01: {
-				if (outData.length < 4) return;
-				auto sector = Read32Bit(outData[0], outData[1]);
-				auto addr   = Read32Bit(outData[2], outData[3]) & 0xFFFFFF;
+				if (outData.length < 5) return;
+				auto sector = Read32Bit(outData[1], outData[2]);
+				auto addr   = Read32Bit(outData[3], outData[4]) & 0xFFFFFF;
 				outData     = [];
 
 				if (addr >= 0xFFFE00) {
 					data ~= DiskStatus.NoMemorySpace; // doesn't fit in memory
+					writeln("no memory space");
 					return;
 				}
 				if (sector >= GetSectorAmount()) {
 					data ~= DiskStatus.OutOfBounds; // sector out of bounds
+					writeln(sector);
+					writeln("Out of bounds");
 					return;
 				}
 
@@ -76,26 +82,30 @@ class DiskDevice : Device {
 					emu.WriteByte(cast(uint) (addr + i), b);
 				}
 				data ~= DiskStatus.Success;
+				writefln("Read sector %d to %.6X", sector, addr);
 				break;
 			}
 			case 0x02: {
-				if (outData.length < 4) return;
-				auto sector = Read32Bit(outData[0], outData[1]);
-				auto addr   = Read32Bit(outData[2], outData[3]) & 0xFFFFFF;
+				if (outData.length < 5) return;
+				auto sector = Read32Bit(outData[1], outData[2]);
+				auto addr   = Read32Bit(outData[3], outData[4]) & 0xFFFFFF;
 				outData     = [];
 
 				if (addr >= 0xFFFE00) {
-					data ~= 2; // doesn't fit in memory
+					data ~= DiskStatus.NoMemorySpace; // doesn't fit in memory
+					writeln("no memory space");
 					return;
 				}
 				if (sector >= GetSectorAmount()) {
-					data ~= 1; // sector out of bounds
+					data ~= DiskStatus.OutOfBounds; // sector out of bounds
+					writeln("Out of bounds");
 					return;
 				}
 
 				file.seek(cast(long) sector);
 				file.rawWrite(emu.ReadBytes(addr, addr + 512));
 				data ~= DiskStatus.Success;
+				writefln("Wrote to sector %d from %.6X", sector, addr);
 				break;
 			}
 			default: break; // no errors

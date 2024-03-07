@@ -27,7 +27,7 @@ Parameters:
 - Memory address, low 16 bits
 - Memory address, high 16 bits
 
-It then writes the contents of the sector (1024 bytes) to that memory address
+It then writes the contents of the sector (512 bytes) to that memory address
 
 It sends a disk status value through `in`
 
@@ -38,4 +38,4 @@ Parameters:
 - Memory address, low 16 bits
 - Memory address, high 16 bits
 
-It then writes the contents of that area of memory (1024 bytes) to the sector
+It then writes the contents of that area of memory (512 bytes) to the sector

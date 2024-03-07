@@ -441,6 +441,10 @@ class Emulator {
 		writefln("BS = %.6X", bs);
 		writefln("DS = %.6X", ds);
 		writefln("SR = %.6X", sr);
+		writefln("AB = %.6X", ReadRegPair(RegPair.AB));
+		writefln("CD = %.6X", ReadRegPair(RegPair.CD));
+		writefln("EF = %.6X", ReadRegPair(RegPair.EF));
+		writefln("GH = %.6X", ReadRegPair(RegPair.GH));
 	}
 
 	void RunInstruction() {
@@ -728,11 +732,11 @@ class Emulator {
 				uint res;
 
 				final switch (op) {
-					case Instruction.ADD: res = v1 + v2; break;
-					case Instruction.SUB: res = v1 - v2; break;
+					case Instruction.ADDP: res = v1 + v2; break;
+					case Instruction.SUBP: res = v1 - v2; break;
 				}
 
-				WriteRegPair(dest, cast(ushort) (res & 0xFFFFFF));
+				WriteRegPair(dest, cast(uint) (res & 0xFFFFFF));
 				SetValueFlags(ReadRegPair(dest));
 				SetFlag(Flag.Carry, res & 0xFF000000? true : false);
 				break;
@@ -901,8 +905,8 @@ class Emulator {
 			}
 			// control group
 			case Instruction.HLT: {
-				halted = true;
-				return;
+				CPUError(Error.Halted);
+				break;
 			}
 			default: {
 				CPUError(Error.InvalidOpcode);
