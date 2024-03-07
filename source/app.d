@@ -1,6 +1,7 @@
 module yeti16.app;
 
 import std.utf;
+import std.conv;
 import std.file;
 import std.stdio;
 import std.string;
@@ -146,6 +147,29 @@ void main(string[] args) {
 			}
 
 			std.file.write(outFile, assembler.bin);
+			break;
+		}
+		case "new_disk": {
+			if (args.length != 4) {
+				stderr.writeln("2 parameters (FILE, SECTORS) required for new_disk");
+				exit(1);
+			}
+			if (!args[3].isNumeric()) {
+				stderr.writeln("SECTORS parameter isn't numeric");
+				exit(1);
+			}
+
+			auto path    = args[2];
+			auto sectors = parse!uint(args[3]);
+
+			auto file = File(path, "wb");
+
+			foreach (i ; 0 .. sectors) {
+				file.rawWrite(new ubyte[512]);
+				writef("\r[%d/%d] Writing sectors", i + 1, sectors);
+				stdout.flush();
+			}
+			writeln();
 			break;
 		}
 		default: {
