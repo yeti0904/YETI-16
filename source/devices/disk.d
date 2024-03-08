@@ -108,7 +108,7 @@ class DiskDevice : Device {
 				writefln("Wrote to sector %d from %.6X", sector, addr);
 				break;
 			}
-			default: break; // no errors
+			default: outData = []; // no errors
 		}
 	}
 

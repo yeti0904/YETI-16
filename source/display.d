@@ -43,6 +43,7 @@ class Display {
 	Vec2!int       resolution = Vec2!int(320, 200);
 	ubyte          mode;
 	VideoMode[256] videoModes;
+	ubyte          drawInterrupt; // non-zero if enabled
 
 	this() {
 		videoModes[0x00] = VideoMode(VideoModeType.Bitmap, 8, Vec2!int(320, 200));
@@ -291,5 +292,9 @@ class Display {
 		SDL_UpdateTexture(texture, null, pixels.ptr, resolution.x * 4);
 		SDL_RenderCopy(renderer, texture, null, null);
 		SDL_RenderPresent(renderer);
+
+		if (drawInterrupt > 0) {
+			emu.Interrupt(drawInterrupt);
+		}
 	}
 }

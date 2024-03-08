@@ -425,6 +425,17 @@ class Emulator {
 		ip = ReadAddr(addr + 1);
 	}
 
+	void Interrupt(ubyte interrupt) {
+		ubyte iflags = ReadByte((interrupt * 4) + 4);
+
+		if (!iflags) CPUError(Error.BadInterrupt);
+
+		auto addr  = ReadAddr((interrupt * 4) + 5);
+		sp        -= 3;
+		WriteAddr(sp, ip);
+		ip = addr;
+	}
+
 	void DumpState() {
 		writeln("YETI-16 State");
 		writeln("=============");

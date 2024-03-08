@@ -16,3 +16,8 @@ This will do nothing in video modes that aren't text mode
 
 ### 0x02 - Load palette
 Loads the default palette where the palette is stored in the current mode
+
+### 0x03 - Set draw interrupt
+The next value is an interrupt that is called after the screen is rendered
+
+Set to zero for no interrupt to be called
