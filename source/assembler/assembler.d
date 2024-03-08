@@ -525,7 +525,7 @@ class Assembler {
 
 					string[] noLabelInsts = [
 						"wrb", "wrw", "wra", "rdb", "rdw", "rda", "jmp", "jz", "jnz",
-						"js", "jns", "jc", "jnc"
+						"js", "jns", "jc", "jnc", "call"
 					];
 
 					foreach (ref param ; node.params) {

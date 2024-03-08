@@ -20,9 +20,10 @@ Operations:
 	new_disk FILE SECTORS      - creates a disk at FILE with SECTORS sectors
 
 Run flags:
-	--serial        : Enables the serial port (port 4040)
-	--allow-ip <IP> : Adds an IP to the serial port whitelist
-	--disk <PATH>   : Loads the given disk
+	--serial         : Enables the serial port (port 4040)
+	--allow-ip <IP>  : Adds an IP to the serial port whitelist
+	--disk <PATH>    : Loads the given disk
+	--memdump <FILE> : On exit, YETI-16 writes the whole contents of memory to FILE
 ";
 
 void main(string[] args) {
@@ -42,35 +43,8 @@ void main(string[] args) {
 				stderr.writeln("Emulator needs FILE parameter");
 				exit(1);
 			}
-
-			bool     enableSerial;
-			string[] allowedIPs = ["127.0.0.1", "0.0.0.0"];
-			string[] disks;
-
-			for (size_t i = 3; i < args.length; ++ i) {
-				switch (args[i]) {
-					case "--serial": {
-						enableSerial = true;
-						break;
-					}
-					case "--allow-ip": {
-						++ i;
-						allowedIPs ~= args[i];
-						break;
-					}
-					case "--disk": {
-						++ i;
-						disks ~= args[i];
-						break;
-					}
-					default: {
-						stderr.writefln("Unknown flag %s", args[i]);
-						exit(1);
-					}
-				}
-			}
 			
-			auto    emulator = new Emulator(enableSerial, allowedIPs, disks);
+			auto    emulator = new Emulator(args);
 			ubyte[] program;
 
 			try {

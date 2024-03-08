@@ -1,5 +1,6 @@
 module yeti16.emulator;
 
+import std.file;
 import std.array;
 import std.stdio;
 import std.format;
@@ -165,10 +166,13 @@ class Emulator {
 	Display                  display;
 	Device[256]              devices;
 
+	// debugging
+	string memDumpFile;
+
 	// config
 	static const double speed = 20; // MHz
 
-	this(bool enableSerial, string[] allowedIPs, string[] disks) {
+	this(string[] args) {
 		display     = new Display();
 		display.emu = this;
 		display.Init();
@@ -177,6 +181,38 @@ class Emulator {
 		devices[1] = new KeyboardDevice();
 		devices[2] = new GraphicsDevice();
 
+		bool     enableSerial;
+		string[] allowedIPs = ["127.0.0.1", "0.0.0.0"];
+		string[] disks;
+
+		for (size_t i = 3; i < args.length; ++ i) {
+			switch (args[i]) {
+				case "--serial": {
+					enableSerial = true;
+					break;
+				}
+				case "--allow-ip": {
+					++ i;
+					allowedIPs ~= args[i];
+					break;
+				}
+				case "--disk": {
+					++ i;
+					disks ~= args[i];
+					break;
+				}
+				case "--memdump": {
+					++ i;
+					memDumpFile = args[i];
+					break;
+				}
+				default: {
+					stderr.writefln("Unknown flag %s", args[i]);
+					exit(1);
+				}
+			}
+		}
+		
 		if (disks.length > 8) {
 			stderr.writefln("Only 8 disks can be connected to the YETI-16 system");
 			exit(1);
@@ -976,6 +1012,11 @@ class Emulator {
 			if (frameTimeGoal > frameTime) {
 				Thread.sleep(dur!("msecs")(cast(long) (frameTimeGoal - frameTime)));
 			}
+		}
+
+		if (memDumpFile != "") {
+			std.file.write(memDumpFile, ram);
+			writefln("Wrote memory dump to '%s'", memDumpFile);
 		}
 	}
 }
