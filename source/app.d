@@ -43,7 +43,7 @@ void main(string[] args) {
 				stderr.writeln("Emulator needs FILE parameter");
 				exit(1);
 			}
-			
+
 			auto    emulator = new Emulator(args);
 			ubyte[] program;
 
@@ -109,6 +109,7 @@ void main(string[] args) {
 			lexer.code     = code;
 			lexer.file     = file;
 			lexer.Lex();
+
 			parser.tokens = lexer.tokens;
 			parser.Parse();
 
