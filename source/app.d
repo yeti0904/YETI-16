@@ -110,10 +110,6 @@ void main(string[] args) {
 			lexer.file     = file;
 			lexer.Lex();
 
-			foreach (ref t ; lexer.tokens) { // TODO: Temporary
-				writeln(t);
-			}
-
 			parser.tokens = lexer.tokens;
 			parser.Parse();
 
