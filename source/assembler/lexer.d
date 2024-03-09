@@ -25,8 +25,12 @@ class Lexer {
 	Token[] tokens;
 	size_t  i;
 	string  file;
-	size_t  line, tokLine, endLine;
-	size_t  col,  tokCol,  endCol;
+	size_t  line;
+	size_t  tokenLine;
+	size_t  tokenCol;
+	size_t  endLine;
+	size_t  endCol;
+	size_t  col;
 	string  reading;
 	string  code;
 	bool    inString;
@@ -36,7 +40,7 @@ class Lexer {
 	}
 
 	void AddToken(TokenType type) {
-		tokens  ~= Token(type, reading, file, tokLine, tokCol);
+		tokens  ~= Token(type, reading, file, tokenLine, tokenCol);
 		reading  = "";
 	}
 
@@ -63,8 +67,8 @@ class Lexer {
 	}
 
 	void SaveTokenLocation() {
-		tokLine = line;
-		tokCol  = col;
+		tokenLine = line;
+		tokenCol  = col;
 	}
 
 	void Lex() {
