@@ -2,6 +2,7 @@ module yeti16.assembler.assembler;
 
 import std.stdio;
 import std.format;
+import std.string;
 import std.algorithm;
 import yeti16.util;
 import yeti16.assembler.error;
@@ -462,7 +463,7 @@ class Assembler {
 			switch (param.type) {
 				case NodeType.String: {
 					auto node2 = cast(StringNode) param;
-					
+
 					if (node.name != "db") {
 						Error(node.error, "String literals are only allowed in db");
 					}
@@ -489,12 +490,27 @@ class Assembler {
 	void Assemble() {
 		uint     programSize;
 		string[] dataInstructions = ["db", "dw", "da"];
+		string   lastLabel;
 
 		foreach (ref inode ; nodes) {
 			switch (inode.type) {
 				case NodeType.Label: {
-					auto node         = cast(LabelNode) inode;
-					labels[node.name] = programSize;
+					auto   node = cast(LabelNode) inode;
+					string labelName;
+
+					if (node.name[0] == '.') {
+						if (lastLabel.strip() == "") {
+							Warn(node.error, "Local label has no parent label");
+						}
+
+						labelName = format("%s.%s", lastLabel, node.name);
+					}
+					else {
+						labelName = node.name;
+						lastLabel = labelName;
+					}
+
+					labels[labelName] = programSize;
 					break;
 				}
 				case NodeType.Instruction: {
@@ -516,9 +532,18 @@ class Assembler {
 			}
 		}
 
+		lastLabel = "";
+
 		foreach (ref inode ; nodes) {
 			switch (inode.type) {
-				case NodeType.Label: break;
+				case NodeType.Label: {
+					auto node = cast(LabelNode) inode;
+
+					if (node.name[0] != '.') {
+						lastLabel = node.name;
+					}
+					break;
+				}
 				case NodeType.Instruction: {
 					auto   node = cast(InstructionNode) inode;
 					Node[] params;
@@ -531,11 +556,19 @@ class Assembler {
 					foreach (ref param ; node.params) {
 						switch (param.type) {
 							case NodeType.Identifier: {
-								auto node2 = cast(IdentifierNode) param;
+								auto   node2 = cast(IdentifierNode) param;
+								string labelName;
 
-								if (node2.name in labels) {
+								if (node2.name[0] == '.') {
+									labelName = format("%s.%s", lastLabel, node2.name);
+								}
+								else {
+									labelName = node2.name;
+								}
+
+								if (labelName in labels) {
 									params ~= new IntegerNode(
-										param.error, labels[node2.name]
+										param.error, labels[labelName]
 									);
 									if (noLabelInsts.canFind(node.name)) {
 										Warn(
@@ -589,7 +622,7 @@ class Assembler {
 				default: {
 					Error(inode.error, "Unexpected %s node", inode.type);
 				}
-			}			
+			}
 		}
 	}
 }

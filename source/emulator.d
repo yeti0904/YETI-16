@@ -212,7 +212,7 @@ class Emulator {
 				}
 			}
 		}
-		
+
 		if (disks.length > 8) {
 			stderr.writefln("Only 8 disks can be connected to the YETI-16 system");
 			exit(1);
@@ -382,7 +382,7 @@ class Emulator {
 
 	uint NextAddr() {
 		return
-			(cast(uint) NextByte()) | 
+			(cast(uint) NextByte()) |
 			(cast(uint) NextByte() << 8) |
 			(cast(uint) NextByte() << 16);
 	}
@@ -975,7 +975,10 @@ class Emulator {
 			SDL_Event e;
 			while (SDL_PollEvent(&e)) {
 				switch (e.type) {
-					case SDL_QUIT: return;
+					case SDL_QUIT: {
+						halted = true;
+						break;
+					}
 					default: {
 						foreach (ref dev ; devices) {
 							if (dev is null) continue;

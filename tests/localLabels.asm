@@ -1,0 +1,3 @@
+test:
+	.test:
+		jmpb .test
