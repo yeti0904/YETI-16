@@ -196,6 +196,7 @@ game:
 		jnzb .render_snake
 		in b a
 		ldsi c 0x01 ; Key down event
+		cmp b c
 		jnzb .ignore_key
 		in b a ; Key code in B
 
