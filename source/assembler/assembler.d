@@ -503,7 +503,7 @@ class Assembler {
 							Warn(node.error, "Local label has no parent label");
 						}
 
-						labelName = format("%s.%s", lastLabel, node.name);
+						labelName = format("%s%s", lastLabel, node.name);
 					}
 					else {
 						labelName = node.name;
@@ -560,7 +560,7 @@ class Assembler {
 								string labelName;
 
 								if (node2.name[0] == '.') {
-									labelName = format("%s.%s", lastLabel, node2.name);
+									labelName = format("%s%s", lastLabel, node2.name);
 								}
 								else {
 									labelName = node2.name;
