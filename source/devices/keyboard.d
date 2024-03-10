@@ -203,10 +203,12 @@ class KeyboardDevice : Device {
 			}
 			case 0x02: { // enable keyboard events
 				enableEvents = true;
+				writeln("Keyboard events enabled");
 				break;
 			}
 			case 0x03: { // disable keyboard events
 				enableEvents = false;
+				writeln("Keyboard events disabled");
 				break;
 			}
 			default: break; // no errors!!
@@ -214,7 +216,7 @@ class KeyboardDevice : Device {
 	}
 
 	override void Update() {
-		
+
 	}
 
 	override void HandleEvent(SDL_Event* e) {

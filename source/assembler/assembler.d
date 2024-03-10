@@ -440,9 +440,8 @@ class Assembler {
 					size += node2.value.length;
 					break;
 				}
+				case NodeType.Identifier:
 				case NodeType.Integer: {
-					auto node2 = cast(IntegerNode) param;
-
 					switch (node.name) {
 						case "db": size += 1; break;
 						case "dw": size += 2; break;
@@ -479,6 +478,24 @@ class Assembler {
 						case "dw": bin ~= NativeToYeti!ushort(cast(ushort) node2.value); break;
 						case "da": bin ~= AddrNativeToYeti(cast(uint) node2.value); break;
 						default:   assert(0);
+					}
+					break;
+				}
+				case NodeType.Identifier: {
+					auto node2 = cast(IdentifierNode) param;
+
+					if (node2.name in consts) {
+						auto value = consts[node2.name];
+
+						switch (node.name) {
+							case "db": bin ~= cast(ubyte) (value & 0xFF); break;
+							case "dw": bin ~= NativeToYeti!ushort(cast(ushort) value); break;
+							case "da": bin ~= AddrNativeToYeti(cast(uint) value); break;
+							default:   assert(0);
+						}
+					}
+					else {
+						Error(node2.error, "Can't use this identifier here");
 					}
 					break;
 				}
