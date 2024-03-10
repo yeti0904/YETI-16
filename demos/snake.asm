@@ -5,6 +5,7 @@
 
 ; Consts
 define paletteSize 48 ; 16 * 3
+define spriteSize  8
 define keySpace    329
 define keyUp       335
 define keyDown     336
@@ -38,6 +39,21 @@ load_palette_loop:
 	incp ds
 	dec c
 	jnzb load_palette_loop
+
+; Load sprite
+cpp sr bs
+ldi a spr_snake_head
+addp sr a
+lda ds 0x00043C ; character 1
+ldsi c spriteSize
+callb memcpy
+
+cpp sr bs
+ldi a spr_snake_tail
+addp sr a
+lda ds 0x000444 ; character 2
+ldsi c spriteSize
+callb memcpy
 
 ; Initialise keyboard
 ldsi a 1    ; Keyboard
@@ -111,6 +127,8 @@ game:
 	addp ds a
 	rdb a ds
 	inc a
+	ldsi b 100
+	mod a b
 	wrb ds a
 
 	; Clear screen
@@ -220,6 +238,8 @@ game:
 		cmp b a
 		jzb .dir_right
 
+		jmpb .render_snake
+
 	.dir_up:
 		ldsi b snakeUp
 		wrb ds b
@@ -260,10 +280,10 @@ game:
 		mul h a ; Offset now in H
 		lda ds 0x000C34 ; VRAM
 		addp ds h
-		ldsi a 0x02
+		ldsi a 0x32
 		wrb ds a
 		incp ds
-		ldsi a 79 ; 'O'
+		ldsi a 1 ; 'O'
 		wrb ds a
 
 	.end:
@@ -292,6 +312,22 @@ print_str:
 	pop b
 	ret
 
+memcpy:
+	; Parameters
+	; SR = source
+	; DS = dest
+	; C  = size
+	push a
+	.loop:
+		rdb a sr
+		wrb ds a
+		incp sr
+		incp ds
+		dec c
+		jnzb .loop
+	pop a
+	ret
+
 ; Palette
 palette:
 	; 0
@@ -299,9 +335,9 @@ palette:
 	; 1
 	db 0xFF 0xFF 0xFF ; Logo text colour
 	; 2
-	db 0x00 0xFF 0x00 ; Snake head
+	db 0x00 0xFF 0x00 ; Snake head FG
 	; 3
-	db 0x00 0x00 0x00
+	db 0x00 0x66 0x00 ; Snake head BG
 	; 4
 	db 0x00 0x00 0x00
 	; 5
@@ -327,6 +363,26 @@ palette:
 	; F
 	db 0x00 0x00 0x00
 
+; Sprites
+spr_snake_head:
+	db 0b11111111
+	db 0b10000001
+	db 0b10100101
+	db 0b10000001
+	db 0b10100101
+	db 0b10111101
+	db 0b10000001
+	db 0b11111111
+spr_snake_tail:
+	db 0b10101010
+	db 0b01010101
+	db 0b10101010
+	db 0b01010101
+	db 0b10101010
+	db 0b01010101
+	db 0b10101010
+	db 0b01010101
+
 ; Strings
 app_title:
 	db "S N A K E" 0
@@ -335,10 +391,14 @@ app_instructions:
 
 ; Variables
 snake_x:
-	db 0
+	db 3
 snake_y:
 	db 0
 snake_dir:
 	db snakeRight
 ticks:
 	db 0
+snake_tail:
+	db 2 0
+	db 1 0
+	db 0 0

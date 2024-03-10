@@ -20,7 +20,7 @@ enum VideoModeType {
 
 struct VideoMode {
 	bool available = false;
-	
+
 	VideoModeType type;
 	ubyte         bpp;
 	Vec2!int      size;
@@ -60,19 +60,19 @@ class Display {
 		}
 
 		string appPath = dirName(thisExePath());
-	
+
 		version (Windows) {
 			if (!exists(appPath ~ "/SDL2.dll")) {
 				stderr.writeln("SDL2 required");
 				exit(1);
 			}
-		
+
 			auto res = loadSDL(format("%s/SDL2.dll", appPath).toStringz());
 		}
 		else {
 			auto res = loadSDL();
 		}
-	
+
 		if (res != sdlSupport) {
 			stderr.writefln("No SDL support");
 
@@ -193,6 +193,8 @@ class Display {
 			stderr.writefln("Failed to create texture: %s", GetError());
 			exit(1);
 		}
+
+		SDL_RenderSetLogicalSize(renderer, resolution.x, resolution.y);
 	}
 
 	void Render() {
