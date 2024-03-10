@@ -14,3 +14,4 @@ yeti-16-test-*
 *.obj
 *.lst
 out.bin
+mem.bin

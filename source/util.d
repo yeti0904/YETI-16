@@ -37,3 +37,13 @@ bool SendData(Socket socket, ubyte[] pdata) {
 	socket.blocking = false;
 	return true;
 }
+
+Key[] GetKeys(Key, Value)(Value[Key] map) {
+	Key[] ret;
+
+	foreach (key, ref value ; map) {
+		ret ~= key;
+	}
+
+	return ret;
+}
