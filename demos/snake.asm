@@ -152,6 +152,50 @@ game:
 	jnzb .input
 
 	; Snake is moving in this frame
+	; Start by moving tail
+	cpp ds bs
+	ldi a snake_length
+	addp ds a
+	rdw c ds ; Snake length in C
+	ldsi a 2
+	mul c a
+	dec c
+	dec c
+
+	cpp ds bs
+	ldi a snake_tail
+	addp ds a ; Snake tail in DS
+
+	cpp sr ds
+	incp sr
+	incp sr ; Snake tail 2nd element pointer in SR
+
+	callb memcpy ; Most of the tail is done
+
+	cpp ds bs
+	ldi a snake_x
+	addp ds a
+	rdb g ds ; X in G
+
+	cpp ds bs
+	ldi a snake_y
+	addp ds a
+	rdb h ds ; Y in H
+
+	cpp ds bs
+	ldi a snake_length
+	addp ds a
+	rdw a ds ; Snake length in A
+	cpp ds bs
+	ldi b snake_tail
+	addp ds b
+	addp ds a
+	decp ds
+	decp ds ; Pointer to tail element before head
+	wrb ds g ; Write X
+	incp ds
+	wrb ds h ; Write Y
+
 	cpp ds bs
 	ldi a snake_dir
 	addp ds a
@@ -273,18 +317,31 @@ game:
 		addp ds a
 		rdb h ds ; Snake Y in H
 
-		ldsi a 20
-		mul h a
-		add h g
-		ldsi a 2
-		mul h a ; Offset now in H
-		lda ds 0x000C34 ; VRAM
-		addp ds h
-		ldsi a 0x32
-		wrb ds a
+		ldsi a 1    ; Character
+		ldsi b 0x32 ; Attribute
+		callb draw_char
+
+		; Draw tail
+		cpp ds bs
+		ldi a snake_length
+		addp ds a
+		rdw c ds ; Snake length in C
+		cpp ds bs
+		ldi a snake_tail
+		addp ds a ; Snake tail array in DS
+
+	.tail_loop:
+		rdb g ds ; X in G
 		incp ds
-		ldsi a 1 ; 'O'
-		wrb ds a
+		rdb h ds ; Y in H
+		incp ds
+
+		ldsi a 2    ; Character
+		ldsi b 0x32 ; Attribute
+		callb draw_char
+
+		dec c
+		jnzb .tail_loop
 
 	.end:
 		ret
@@ -326,6 +383,30 @@ memcpy:
 		dec c
 		jnzb .loop
 	pop a
+	ret
+
+draw_char:
+	; Parameters
+	; G = X
+	; H = Y
+	; A = character
+	; B = attribute
+	push c
+	pusha ds
+
+	ldsi c 20
+	mul h c
+	add h g
+	ldsi c 2
+	mul h c ; Offset now in H
+	lda ds 0x000C34 ; VRAM
+	addp ds h
+	wrb ds b
+	incp ds
+	wrb ds a
+
+	popa ds
+	pop c
 	ret
 
 ; Palette
@@ -398,6 +479,8 @@ snake_dir:
 	db snakeRight
 ticks:
 	db 0
+snake_length:
+	dw 3
 snake_tail:
 	db 2 0
 	db 1 0
