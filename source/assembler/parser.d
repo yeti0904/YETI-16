@@ -18,7 +18,8 @@ enum NodeType {
 	String,
 	RegPair,
 	Identifier,
-	Define
+	Define,
+	Fill
 }
 
 class Node {
@@ -171,6 +172,20 @@ class DefineNode : Node {
 	}
 }
 
+class FillNode : Node {
+	uint times;
+	uint value;
+
+	this(ErrorInfo perror) {
+		type  = NodeType.Fill;
+		error = perror;
+	}
+
+	override string toString() {
+		return format("fill %d %d", times, value);
+	}
+}
+
 class ParserError : Exception {
 	this() {
 		super("", "", 0);
@@ -272,12 +287,29 @@ class Parser {
 		return ret;
 	}
 
+	Node ParseFill() {
+		auto ret = new FillNode(GetError());
+
+		Next();
+		Expect(TokenType.Integer);
+		ret.times = parse!uint(tokens[i].contents);
+
+		Next();
+		Expect(TokenType.Integer);
+		ret.value = parse!uint(tokens[i].contents);
+
+		Next();
+		Expect(TokenType.End);
+		return ret;
+	}
+
 	Node ParseStatement() {
 		switch (tokens[i].type) {
 			case TokenType.Label:      return ParseLabel();
 			case TokenType.Identifier: {
 				switch (tokens[i].contents) {
 					case "define": return ParseDefine();
+					case "fill":   return ParseFill();
 					default:       return ParseInstruction();
 				}
 			}

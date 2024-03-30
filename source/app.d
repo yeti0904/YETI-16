@@ -1,12 +1,9 @@
 module yeti16.app;
 
 import std.utf;
-import std.conv;
 import std.file;
-import std.range;
 import std.stdio;
 import std.string;
-import std.algorithm;
 import yeti16.util;
 import yeti16.emulator;
 import yeti16.assembler.lexer;
@@ -17,19 +14,12 @@ const string appUsage = "
 Usage: %s OPERATION [flags]
 
 Operations:
-	run FILE [read flags] - runs the given binary file in the emulator
-	asm FILE [read flags] - assembles the given file (to \"out.bin\" by default)
-	new_disk FILE SECTORS - creates a disk at FILE with SECTORS sectors
+	run FILE [read flags]      - runs the given binary file in the emulator
+	asm FILE [-o out_file.bin] - assembles the given file (to \"out.bin\" by default)
 
 Run flags:
-	--serial         : Enables the serial port (port 4040)
-	--allow-ip <IP>  : Adds an IP to the serial port whitelist
-	--disk <PATH>    : Loads the given disk
-	--memdump <FILE> : On exit, YETI-16 writes the whole contents of memory to FILE
-
-Asm flags:
-	-o <FILE> : Sets output binary file to FILE
-	--labels  : Shows label offset addresses after compilation
+	--serial        : Enables the serial port (port 4040)
+	--allow-ip <IP> : Adds an IP to the serial port whitelist
 ";
 
 void main(string[] args) {
@@ -50,6 +40,27 @@ void main(string[] args) {
 				exit(1);
 			}
 
+			bool     enableSerial;
+			string[] allowedIPs = ["127.0.0.1", "0.0.0.0"];
+
+			for (size_t i = 3; i < args.length; ++ i) {
+				switch (args[i]) {
+					case "--serial": {
+						enableSerial = true;
+						break;
+					}
+					case "--allow-ip": {
+						++ i;
+						allowedIPs ~= args[i];
+						break;
+					}
+					default: {
+						stderr.writefln("Unknown flag %s", args[i]);
+						exit(1);
+					}
+				}
+			}
+			
 			auto    emulator = new Emulator(args);
 			ubyte[] program;
 
@@ -70,7 +81,6 @@ void main(string[] args) {
 		case "asm": {
 			string file;
 			string outFile = "out.bin";
-			bool   showLabels;
 
 			for (size_t i = 2; i < args.length; ++ i) {
 				if (args[i][0] == '-') {
@@ -79,10 +89,6 @@ void main(string[] args) {
 							++ i;
 							outFile = args[i];
 							// TODO: check
-							break;
-						}
-						case "--labels": {
-							showLabels = true;
 							break;
 						}
 						default: {
@@ -120,7 +126,6 @@ void main(string[] args) {
 			lexer.code     = code;
 			lexer.file     = file;
 			lexer.Lex();
-
 			parser.tokens = lexer.tokens;
 			parser.Parse();
 
@@ -132,42 +137,7 @@ void main(string[] args) {
 				exit(1);
 			}
 
-			if (showLabels) {
-				size_t maxLength =
-					assembler.labels.keys().map!(a => a.length).maxElement();
-
-				foreach (key, ref value ; assembler.labels) {
-					writefln(
-						"%s%s = %.6X", key,
-						iota(maxLength - key.length).map!(a => ' '), value
-					);
-				}
-			}
-
 			std.file.write(outFile, assembler.bin);
-			break;
-		}
-		case "new_disk": {
-			if (args.length != 4) {
-				stderr.writeln("2 parameters (FILE, SECTORS) required for new_disk");
-				exit(1);
-			}
-			if (!args[3].isNumeric()) {
-				stderr.writeln("SECTORS parameter isn't numeric");
-				exit(1);
-			}
-
-			auto path    = args[2];
-			auto sectors = parse!uint(args[3]);
-
-			auto file = File(path, "wb");
-
-			foreach (i ; 0 .. sectors) {
-				file.rawWrite(new ubyte[512]);
-				writef("\r[%d/%d] Writing sectors", i + 1, sectors);
-				stdout.flush();
-			}
-			writeln();
 			break;
 		}
 		default: {
